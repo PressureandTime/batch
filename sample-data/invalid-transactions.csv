@@ -1,0 +1,6 @@
+Transaction Date,Account Number,Account Holder Name,Amount
+2025-02-20,000-123456789-01,John Doe,100.00
+2025/02/21,00012345678901,Jane Smith,250.50
+2025-02-30,000-987654321-02,,150.00
+invalid-date,000-111222333-03,Alex Johnson,-50.00
+2025-03-01,000-123456789-0A,Emily Davis,200.00
