@@ -39,7 +39,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
+    watch,
   } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -81,8 +81,10 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
       <form onSubmit={handleSubmit(onFormSubmit)}>
         <Stack gap={6}>
           <Field.Root invalid={!!errors.batchName}>
-            <Field.Label>Batch Name</Field.Label>
+            <Field.Label htmlFor="batchName">Batch Name</Field.Label>
             <Input
+              id="batchName"
+              data-testid="batch-name-input"
               {...register('batchName')}
               placeholder="Enter batch name"
               defaultValue={batchName}
@@ -91,8 +93,10 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
           </Field.Root>
 
           <Field.Root invalid={!!errors.approver}>
-            <Field.Label>Approver</Field.Label>
+            <Field.Label htmlFor="approver">Approver</Field.Label>
             <select
+              id="approver"
+              data-testid="approver-select"
               {...register('approver')}
               style={{
                 width: '100%',
@@ -116,8 +120,35 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
           </Field.Root>
 
           <Field.Root invalid={!!errors.file}>
-            <Field.Label>CSV File</Field.Label>
-            <Input type="file" accept=".csv" {...register('file')} pt={1} />
+            <Field.Label htmlFor="file">CSV File</Field.Label>
+            <Input
+              id="file"
+              data-testid="csv-file-input"
+              type="file"
+              accept=".csv"
+              {...register('file')}
+              pt={1}
+            />
+            {/* Visual feedback for selected file */}
+            {(() => {
+              const files = watch('file');
+              const fileName = files && files.length > 0 ? files[0].name : '';
+              return fileName ? (
+                <Box
+                  mt={2}
+                  px={3}
+                  py={2}
+                  borderWidth="1px"
+                  borderRadius="md"
+                  bg="gray.50"
+                  color="gray.700"
+                  aria-live="polite"
+                  data-testid="selected-file-name"
+                >
+                  Selected file: {fileName}
+                </Box>
+              ) : null;
+            })()}
             <Field.ErrorText>{errors.file?.message}</Field.ErrorText>
           </Field.Root>
 

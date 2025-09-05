@@ -13,7 +13,8 @@ interface BatchTransferModalProps {
 }
 
 export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransferModalProps) => {
-  const { currentStep, prevStep, nextStep, reset, parsedRecords } = useBatchTransferStore();
+  const { currentStep, prevStep, nextStep, reset, parsedRecords, batchName, approver } =
+    useBatchTransferStore();
   const step1Ref = useRef<Step1DetailsRef>(null);
 
   const handleClose = () => {
@@ -37,6 +38,8 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
         .filter((record) => record.isValid)
         .map((record, index) => ({
           id: `batch-${Date.now()}-${index}`,
+          batchName,
+          approver,
           transactionDate: String(record.data['Transaction Date']),
           accountNumber: String(record.data['Account Number']),
           accountHolderName: String(record.data['Account Holder Name']),
@@ -94,9 +97,9 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="900px" mx={4}>
+        <Dialog.Content maxW="900px" mx={4} data-testid="batch-transfer-dialog">
           <Dialog.Header>
-            <Dialog.Title>{getStepTitle()}</Dialog.Title>
+            <Dialog.Title data-testid="step-title">{getStepTitle()}</Dialog.Title>
             <Dialog.CloseTrigger />
           </Dialog.Header>
 
@@ -108,7 +111,7 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
             <Stack direction="row" gap={3} justify="space-between" w="full">
               <Box>
                 {currentStep > 1 && (
-                  <Button variant="outline" onClick={prevStep}>
+                  <Button variant="outline" onClick={prevStep} data-testid="previous-btn">
                     Previous
                   </Button>
                 )}
@@ -121,16 +124,27 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
                   borderColor="gray.300"
                   color="gray.700"
                   _hover={{ bg: 'gray.50' }}
+                  _focus={{ boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.6)' }}
                 >
                   Cancel
                 </Button>
 
                 {currentStep < 3 ? (
-                  <Button colorPalette="blue" onClick={handleNext} disabled={!canProceed()}>
+                  <Button
+                    colorPalette="blue"
+                    onClick={handleNext}
+                    disabled={!canProceed()}
+                    data-testid="next-btn"
+                  >
                     Next
                   </Button>
                 ) : (
-                  <Button colorPalette="green" onClick={handleSubmit} disabled={!canProceed()}>
+                  <Button
+                    colorPalette="green"
+                    onClick={handleSubmit}
+                    disabled={!canProceed()}
+                    data-testid="submit-batch-btn"
+                  >
                     Submit Batch
                   </Button>
                 )}

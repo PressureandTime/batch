@@ -1,32 +1,14 @@
 import { useEffect, useState } from 'react';
-import { z } from 'zod';
 import Papa from 'papaparse';
-import { Box, Text, Table, Spinner, Center, Stack, Tooltip } from '@chakra-ui/react';
+import { Box, Text, Table, Spinner, Center, Stack, Tooltip, Checkbox } from '@chakra-ui/react';
 import { useBatchTransferStore } from './useBatchTransferStore';
 import type { ParsedRecord } from '../../types';
-
-// Zod validation schema for CSV records
-const transactionSchema = z.object({
-  'Transaction Date': z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-    .refine((date) => {
-      const parsedDate = new Date(date);
-      return !isNaN(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === date;
-    }, 'Invalid date'),
-  'Account Number': z
-    .string()
-    .regex(/^\d{3}-\d{9}-\d{2}$/, 'Account number must follow format: 000-000000000-00'),
-  'Account Holder Name': z.string().min(1, 'Account holder name is required'),
-  Amount: z
-    .string()
-    .transform((val) => parseFloat(val))
-    .refine((num) => !isNaN(num) && num > 0, 'Amount must be a positive number'),
-});
+import { transactionSchema } from './validation';
 
 export const Step2_Review = () => {
   const { file, setParsedRecords, parsedRecords } = useBatchTransferStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [onlyInvalid, setOnlyInvalid] = useState(false);
 
   useEffect(() => {
     if (file) {
@@ -86,13 +68,33 @@ export const Step2_Review = () => {
 
       <Stack gap={4} mb={6}>
         <Text fontWeight="bold">Validation Results:</Text>
-        <Stack direction="row" gap={6}>
-          <Text color="green.500">{validCount} valid records</Text>
-          <Text color="red.500">{invalidCount} invalid records</Text>
+        <Stack direction="row" gap={6} align="center">
+          <Text color="green.500" data-testid="valid-count">
+            {validCount} valid records
+          </Text>
+          <Text color="red.500" data-testid="invalid-count">
+            {invalidCount} invalid records
+          </Text>
+          <Checkbox.Root
+            ml="auto"
+            checked={onlyInvalid}
+            onCheckedChange={(details) => setOnlyInvalid(details.checked === true)}
+            data-testid="only-invalid-toggle"
+          >
+            <Checkbox.Control />
+            <Checkbox.Label>Show only invalid</Checkbox.Label>
+            <Checkbox.HiddenInput />
+          </Checkbox.Root>
         </Stack>
       </Stack>
 
-      <Box borderWidth="1px" borderRadius="lg" maxH="350px" overflowY="auto">
+      <Box
+        borderWidth="1px"
+        borderRadius="lg"
+        maxH="350px"
+        overflowY="auto"
+        data-testid="review-table"
+      >
         <Table.Root variant="outline" size="sm">
           <Table.Header position="sticky" top={0} bg="white" zIndex={1}>
             <Table.Row>
@@ -104,48 +106,61 @@ export const Step2_Review = () => {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {parsedRecords.map((record, index) => (
-              <Table.Row key={index} bg={!record.isValid ? 'red.50' : 'transparent'}>
-                <Table.Cell>
-                  {record.isValid ? (
-                    <Text color="green.500" fontSize="lg" fontWeight="bold">
-                      ✓
-                    </Text>
-                  ) : (
-                    <Tooltip.Root>
-                      <Tooltip.Trigger asChild>
-                        <Text color="red.500" fontSize="lg" fontWeight="bold" cursor="pointer">
-                          ⚠
-                        </Text>
-                      </Tooltip.Trigger>
-                      <Tooltip.Positioner>
-                        <Tooltip.Content
-                          bg="red.600"
-                          color="white"
-                          borderRadius="md"
-                          px={3}
-                          py={2}
-                          fontSize="sm"
-                          maxW="300px"
-                        >
-                          <Tooltip.Arrow>
-                            <Tooltip.ArrowTip />
-                          </Tooltip.Arrow>
-                          {Object.entries(record.errors)
-                            .filter(([, messages]) => messages && messages.length > 0)
-                            .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
-                            .join('; ')}
-                        </Tooltip.Content>
-                      </Tooltip.Positioner>
-                    </Tooltip.Root>
-                  )}
-                </Table.Cell>
-                <Table.Cell>{String(record.data['Transaction Date'] ?? '')}</Table.Cell>
-                <Table.Cell>{String(record.data['Account Number'] ?? '')}</Table.Cell>
-                <Table.Cell>{String(record.data['Account Holder Name'] ?? '')}</Table.Cell>
-                <Table.Cell textAlign="end">{String(record.data['Amount'] ?? '')}</Table.Cell>
-              </Table.Row>
-            ))}
+            {(onlyInvalid ? parsedRecords.filter((r) => !r.isValid) : parsedRecords).map(
+              (record, index) => (
+                <Table.Row
+                  key={index}
+                  bg={!record.isValid ? 'red.50' : 'transparent'}
+                  data-testid="review-row"
+                >
+                  <Table.Cell>
+                    {record.isValid ? (
+                      <Text color="green.500" fontSize="lg" fontWeight="bold">
+                        ✓
+                      </Text>
+                    ) : (
+                      <Tooltip.Root>
+                        <Tooltip.Trigger asChild>
+                          <Text
+                            color="red.500"
+                            fontSize="lg"
+                            fontWeight="bold"
+                            cursor="pointer"
+                            data-testid="invalid-status"
+                          >
+                            ⚠
+                          </Text>
+                        </Tooltip.Trigger>
+                        <Tooltip.Positioner>
+                          <Tooltip.Content
+                            bg="red.600"
+                            color="white"
+                            borderRadius="md"
+                            px={3}
+                            py={2}
+                            fontSize="sm"
+                            maxW="300px"
+                            data-testid="error-tooltip"
+                          >
+                            <Tooltip.Arrow>
+                              <Tooltip.ArrowTip />
+                            </Tooltip.Arrow>
+                            {Object.entries(record.errors)
+                              .filter(([, messages]) => messages && messages.length > 0)
+                              .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
+                              .join('; ')}
+                          </Tooltip.Content>
+                        </Tooltip.Positioner>
+                      </Tooltip.Root>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>{String(record.data['Transaction Date'] ?? '')}</Table.Cell>
+                  <Table.Cell>{String(record.data['Account Number'] ?? '')}</Table.Cell>
+                  <Table.Cell>{String(record.data['Account Holder Name'] ?? '')}</Table.Cell>
+                  <Table.Cell textAlign="end">{String(record.data['Amount'] ?? '')}</Table.Cell>
+                </Table.Row>
+              )
+            )}
           </Table.Body>
         </Table.Root>
       </Box>

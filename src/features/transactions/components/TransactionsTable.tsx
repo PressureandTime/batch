@@ -16,10 +16,12 @@ export const TransactionsTable = ({ transactions }: TransactionsTableProps) => {
   }
 
   return (
-    <Box borderWidth="1px" borderRadius="lg">
+    <Box borderWidth="1px" borderRadius="lg" data-testid="transactions-table">
       <Table.Root variant="outline">
         <Table.Header>
           <Table.Row>
+            <Table.ColumnHeader>Batch Name</Table.ColumnHeader>
+            <Table.ColumnHeader>Approver</Table.ColumnHeader>
             <Table.ColumnHeader>Transaction Date</Table.ColumnHeader>
             <Table.ColumnHeader>Account Number</Table.ColumnHeader>
             <Table.ColumnHeader>Account Holder Name</Table.ColumnHeader>
@@ -29,12 +31,14 @@ export const TransactionsTable = ({ transactions }: TransactionsTableProps) => {
         </Table.Header>
         <Table.Body>
           {transactions.map((tx) => (
-            <Table.Row key={tx.id}>
+            <Table.Row key={tx.id} data-testid="tx-row">
+              <Table.Cell>{tx.batchName}</Table.Cell>
+              <Table.Cell>{tx.approver}</Table.Cell>
               <Table.Cell>{tx.transactionDate}</Table.Cell>
               <Table.Cell>{tx.accountNumber}</Table.Cell>
               <Table.Cell>{tx.accountHolderName}</Table.Cell>
               <Table.Cell textAlign="end">${tx.amount.toFixed(2)}</Table.Cell>
-              <Table.Cell>
+              <Table.Cell data-testid="tx-status">
                 <StatusBadge status={tx.status} errorMessage={tx.errorMessage} />
               </Table.Cell>
             </Table.Row>
