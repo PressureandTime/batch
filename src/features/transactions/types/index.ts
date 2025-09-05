@@ -2,6 +2,8 @@ export type TransactionStatus = 'Pending' | 'Settled' | 'Failed';
 
 export interface Transaction {
   id: string;
+  batchName: string;
+  approver: string;
   transactionDate: string;
   accountNumber: string;
   accountHolderName: string;

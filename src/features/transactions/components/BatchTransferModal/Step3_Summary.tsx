@@ -87,21 +87,36 @@ export const Step3_Summary = () => {
           <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={6}>
             <Stat.Root>
               <Stat.Label>Total Amount</Stat.Label>
-              <Stat.ValueText fontSize="2xl" fontWeight="bold" color="green.600">
+              <Stat.ValueText
+                data-testid="total-amount-value"
+                fontSize="2xl"
+                fontWeight="bold"
+                color="green.600"
+              >
                 {formatCurrency(statistics.totalAmount)}
               </Stat.ValueText>
             </Stat.Root>
 
             <Stat.Root>
               <Stat.Label>Number of Payments</Stat.Label>
-              <Stat.ValueText fontSize="2xl" fontWeight="bold" color="blue.600">
+              <Stat.ValueText
+                data-testid="number-of-payments-value"
+                fontSize="2xl"
+                fontWeight="bold"
+                color="blue.600"
+              >
                 {statistics.numberOfPayments.toLocaleString()}
               </Stat.ValueText>
             </Stat.Root>
 
             <Stat.Root>
               <Stat.Label>Average Payment Value</Stat.Label>
-              <Stat.ValueText fontSize="2xl" fontWeight="bold" color="purple.600">
+              <Stat.ValueText
+                data-testid="average-payment-value"
+                fontSize="2xl"
+                fontWeight="bold"
+                color="purple.600"
+              >
                 {formatCurrency(statistics.averagePaymentValue)}
               </Stat.ValueText>
             </Stat.Root>
