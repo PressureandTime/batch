@@ -5,6 +5,7 @@ import { TransactionsTable } from './components/TransactionsTable';
 import { BatchTransferModal } from './components/BatchTransferModal';
 import type { Transaction } from './types';
 import { clampPage, getPaginated, getTotalPages } from './utils/pagination';
+import { Pagination } from './components/Pagination';
 
 // Initial mock data to populate the table and demonstrate all status types
 const initialTransactions: Transaction[] = [
@@ -139,12 +140,18 @@ export const TransactionsPage = () => {
 
         <TransactionsTable transactions={paginatedTransactions} />
 
-        <Stack direction="row" justify="space-between" align="center">
-          <Stack direction="row" align="center" gap={3}>
+        <Stack
+          direction={{ base: 'column', md: 'row' }}
+          justify="space-between"
+          align="center"
+          gap={{ base: 4, md: 6 }}
+          mt={2}
+        >
+          <Stack direction="row" align="center" gap={4} wrap="wrap">
             <Text fontSize="sm" data-testid="results-count">
               {transactions.length} result{transactions.length === 1 ? '' : 's'}
             </Text>
-            <NativeSelect.Root size="sm" width="auto">
+            <NativeSelect.Root size="sm" width="auto" minW={{ base: '32', md: '36' }}>
               <NativeSelect.Field
                 data-testid="items-per-page"
                 value={String(itemsPerPage)}
@@ -154,6 +161,7 @@ export const TransactionsPage = () => {
                   const newTotal = Math.max(1, Math.ceil(transactions.length / next));
                   if (currentPage > newTotal) setCurrentPage(newTotal);
                 }}
+                style={{ whiteSpace: 'nowrap' }}
               >
                 <option value="10">10 / page</option>
                 <option value="25">25 / page</option>
@@ -164,25 +172,13 @@ export const TransactionsPage = () => {
           </Stack>
 
           {totalPages > 1 ? (
-            <Stack direction="row" justify="flex-end" gap={4} align="center">
-              <Button
-                data-testid="pagination-prev"
-                onClick={() => setCurrentPage(Math.max(safeCurrentPage - 1, 1))}
-                disabled={safeCurrentPage === 1}
-              >
-                Previous
-              </Button>
-              <Text data-testid="pagination-label">
-                Page {safeCurrentPage} of {totalPages}
-              </Text>
-              <Button
-                data-testid="pagination-next"
-                onClick={() => setCurrentPage(Math.min(safeCurrentPage + 1, totalPages))}
-                disabled={safeCurrentPage === totalPages}
-              >
-                Next
-              </Button>
-            </Stack>
+            <Box width="100%" display="flex" justifyContent="flex-end">
+              <Pagination
+                page={safeCurrentPage}
+                totalPages={totalPages}
+                onChange={(p) => setCurrentPage(p)}
+              />
+            </Box>
           ) : (
             <Text data-testid="pagination-label">Page 1 of 1</Text>
           )}
