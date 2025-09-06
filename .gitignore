@@ -31,3 +31,9 @@ test-results/.last-run.json
 docs/COMPLIANCE_REPORT.md
 COMPLIANCE_REPORT.md
 requirements.md
+
+
+# Sample data: keep only curated csvs in repo; ignore large generated datasets
+/sample-data/*-50000.csv
+/sample-data/*-100000.csv
+/sample-data/*-200000.csv

@@ -84,7 +84,7 @@ function generateLargeValid(n = 10000) {
   for (let i = 0; i < n; i++) {
     rows.push(`${genDate(i)},${genAccount(i)},${genName(i)},${genPositiveAmount(i)}`);
   }
-  writeCsv('large-valid-10000.csv', rows);
+  writeCsv(`large-valid-${n}.csv`, rows);
 }
 
 function generateLargeMixed(n = 10000) {
@@ -111,7 +111,7 @@ function generateLargeMixed(n = 10000) {
       rows.push(`${genDate(i)},${genAccount(i)},${genName(i)},-10.00`);
     }
   }
-  writeCsv('large-mixed-10000.csv', rows);
+  writeCsv(`large-mixed-${n}.csv`, rows);
 }
 
 function generateHeaderMismatch() {
@@ -143,8 +143,21 @@ function generateBoundaryDates() {
 }
 
 ensureDir(outDir);
+// Curated datasets to keep in repo
+generateLargeValid(100);
+generateLargeMixed(100);
+generateLargeValid(1000);
+generateLargeMixed(1000);
 generateLargeValid(10000);
 generateLargeMixed(10000);
+// Larger datasets for performance testing (git-ignored)
+generateLargeValid(50000);
+generateLargeMixed(50000);
+generateLargeValid(100000);
+generateLargeMixed(100000);
+generateLargeValid(200000);
+generateLargeMixed(200000);
+
 generateHeaderMismatch();
 generateEdgeAmounts();
 generateBoundaryDates();
