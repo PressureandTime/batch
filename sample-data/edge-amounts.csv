@@ -1,0 +1,6 @@
+Transaction Date,Account Number,Account Holder Name,Amount
+2025-01-01,000-123456789-01,Zero Test,0.00
+2025-01-02,000-123456789-02,Negative Test,-1.00
+2025-01-03,000-123456789-03,Comma Big,"1,234,567.89"
+2025-01-04,000-123456789-04,Spaces ,   250.50  
+2025-01-05,000-123456789-05,Trim Test, 100.00 

@@ -1,9 +1,10 @@
 import { Box, Button, Container, Heading, Stack, Text, NativeSelect } from '@chakra-ui/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, startTransition } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { TransactionsTable } from './components/TransactionsTable';
 import { BatchTransferModal } from './components/BatchTransferModal';
 import type { Transaction } from './types';
+import { clampPage, getPaginated, getTotalPages } from './utils/pagination';
 
 // Initial mock data to populate the table and demonstrate all status types
 const initialTransactions: Transaction[] = [
@@ -64,29 +65,53 @@ export const TransactionsPage = () => {
   });
 
   const handleBatchSubmit = (newTransactions: Transaction[]) => {
-    setTransactions((prev) => {
-      const updated = [...prev, ...newTransactions];
-      const newTotalPages = Math.max(1, Math.ceil(updated.length / itemsPerPage));
-      setCurrentPage(newTotalPages); // jump to last page to show newest rows
-      return updated;
-    });
+    const batchSize = newTransactions.length;
+
+    // Always land on the first page for a predictable UX.
+    setCurrentPage(1);
+
+    const applyUpdate = () =>
+      setTransactions((prev) => {
+        const updated = [...prev, ...newTransactions];
+        return updated;
+      });
+
+    // Keep responsiveness for very large batches.
+    if (batchSize >= 1000) {
+      startTransition(applyUpdate);
+    } else {
+      applyUpdate();
+    }
   };
 
-  const paginatedTransactions = useMemo(() => {
-    const end = currentPage * itemsPerPage;
-    const start = end - itemsPerPage;
-    return transactions.slice(start, end);
-  }, [transactions, currentPage, itemsPerPage]);
+  // compute total pages and clamp current page to avoid out-of-range states
+  const totalPages = useMemo(
+    () => getTotalPages(transactions.length, itemsPerPage),
+    [transactions.length, itemsPerPage]
+  );
+  const safeCurrentPage = useMemo(
+    () => clampPage(currentPage, totalPages),
+    [currentPage, totalPages]
+  );
 
-  // reflect state in URL for deep-linking
+  // ensure we never stay on an invalid page after data/page-size changes
+  useEffect(() => {
+    if (safeCurrentPage !== currentPage) setCurrentPage(safeCurrentPage);
+  }, [safeCurrentPage, currentPage]);
+
+  const paginatedTransactions = useMemo(() => {
+    return getPaginated(transactions, safeCurrentPage, itemsPerPage);
+  }, [transactions, safeCurrentPage, itemsPerPage]);
+
+  // reflect state in URL for deep-linking (use clamped page)
   useEffect(() => {
     const url = new URL(window.location.href);
-    url.searchParams.set('page', String(currentPage));
+    url.searchParams.set('page', String(safeCurrentPage));
     url.searchParams.set('pageSize', String(itemsPerPage));
     window.history.replaceState(null, '', url);
-  }, [currentPage, itemsPerPage]);
+  }, [safeCurrentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  // totalPages computed above via useMemo
 
   // persist pagination state
   useEffect(() => {
@@ -142,18 +167,18 @@ export const TransactionsPage = () => {
             <Stack direction="row" justify="flex-end" gap={4} align="center">
               <Button
                 data-testid="pagination-prev"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(safeCurrentPage - 1, 1))}
+                disabled={safeCurrentPage === 1}
               >
                 Previous
               </Button>
               <Text data-testid="pagination-label">
-                Page {currentPage} of {totalPages}
+                Page {safeCurrentPage} of {totalPages}
               </Text>
               <Button
                 data-testid="pagination-next"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(Math.min(safeCurrentPage + 1, totalPages))}
+                disabled={safeCurrentPage === totalPages}
               >
                 Next
               </Button>

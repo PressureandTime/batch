@@ -7,7 +7,7 @@ const sample = (name: string) => path.resolve(process.cwd(), 'sample-data', name
  * Pagination UX regression + edge-cases
  */
 test.describe('Transactions pagination UX', () => {
-  test('footer visible on single page, grows to multi-page, jumps to last and changes page size', async ({
+  test('footer visible on single page, grows to multi-page, lands on first page after upload and changes page size', async ({
     page,
   }) => {
     await page.goto('/');
@@ -47,17 +47,17 @@ test.describe('Transactions pagination UX', () => {
     await page.getByTestId('next-btn').click();
     await page.getByTestId('submit-batch-btn').click();
 
-    // After 2nd submission, component should jump to last page
-    await expect(page.getByTestId('pagination-label')).toHaveText('Page 2 of 2');
+    // After 2nd submission, component should land on page 1
+    await expect(page.getByTestId('pagination-label')).toHaveText('Page 1 of 2');
     await expect(page.getByTestId('results-count')).toHaveText('13 results');
 
-    // Table should show remaining 3 rows on the last page
-    const lastPageCount = await page
+    // Table should show the first 10 rows on page 1 (default page size is 10)
+    const firstPageCount = await page
       .locator('[data-testid="transactions-table"] [data-testid="tx-row"]')
       .count();
-    expect(lastPageCount).toBe(3);
+    expect(firstPageCount).toBe(10);
 
-    // Change items per page to 25 -> collapses to single page, label updates
+    // Change items per page to 25 -> still multiple pages? 13 rows -> single page
     await page.getByTestId('items-per-page').selectOption('25');
     await expect(page.getByTestId('pagination-label')).toHaveText('Page 1 of 1');
     await expect(page.getByTestId('items-per-page')).toHaveValue('25');

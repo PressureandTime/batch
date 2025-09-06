@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test runner artifacts
+# Keep test results local; do not commit last-run state
+test-results/.last-run.json
+
+# Generated reports and local docs that should not be committed
+docs/COMPLIANCE_REPORT.md
+COMPLIANCE_REPORT.md
+requirements.md
