@@ -248,15 +248,41 @@ export const Step2_Review = () => {
                                   ✓
                                 </Text>
                               ) : (
-                                <Text
-                                  color="red.500"
-                                  fontSize="lg"
-                                  fontWeight="bold"
-                                  cursor="pointer"
-                                  data-testid="invalid-status"
-                                >
-                                  ⚠
-                                </Text>
+                                <Tooltip.Root>
+                                  <Tooltip.Trigger asChild>
+                                    <Text
+                                      color="red.500"
+                                      fontSize="lg"
+                                      fontWeight="bold"
+                                      cursor="pointer"
+                                      data-testid="invalid-status"
+                                    >
+                                      ⚠
+                                    </Text>
+                                  </Tooltip.Trigger>
+                                  <Tooltip.Positioner>
+                                    <Tooltip.Content
+                                      bg="red.600"
+                                      color="white"
+                                      borderRadius="md"
+                                      px={3}
+                                      py={2}
+                                      fontSize="sm"
+                                      maxW="300px"
+                                      data-testid="error-tooltip"
+                                    >
+                                      <Tooltip.Arrow>
+                                        <Tooltip.ArrowTip />
+                                      </Tooltip.Arrow>
+                                      {Object.entries(record.errors)
+                                        .filter(([, messages]) => messages && messages.length > 0)
+                                        .map(
+                                          ([field, messages]) => `${field}: ${messages?.join(', ')}`
+                                        )
+                                        .join('; ')}
+                                    </Tooltip.Content>
+                                  </Tooltip.Positioner>
+                                </Tooltip.Root>
                               )}
                             </Box>
                             <Box>{String(record.data['Transaction Date'] ?? '')}</Box>
