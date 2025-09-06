@@ -1,5 +1,5 @@
 import { Dialog, Button, Stack, Text, Box } from '@chakra-ui/react';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Transaction } from '../../types';
 import { useBatchTransferStore } from './useBatchTransferStore';
 import { Step1_Details, type Step1DetailsRef } from './Step1_Details';
@@ -13,8 +13,41 @@ interface BatchTransferModalProps {
 }
 
 export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransferModalProps) => {
-  const { currentStep, prevStep, nextStep, reset, parsedRecords, batchName, approver } =
-    useBatchTransferStore();
+  const {
+    currentStep,
+    prevStep,
+    nextStep,
+    reset,
+    parsedRecords,
+    batchName,
+    approver,
+    step1IsValid,
+    setStep1Data,
+  } = useBatchTransferStore();
+  const [domStep1Valid, setDomStep1Valid] = useState(false);
+
+  useEffect(() => {
+    if (currentStep !== 1) return;
+    const check = () => {
+      const bn = (document.getElementById('batchName') as HTMLInputElement | null)?.value?.trim();
+      const ap = (document.getElementById('approver') as HTMLSelectElement | null)?.value?.trim();
+      const fiLen =
+        (document.getElementById('file') as HTMLInputElement | null)?.files?.length ?? 0;
+      setDomStep1Valid(!!bn && !!ap && fiLen > 0);
+    };
+    check();
+    const i = window.setInterval(check, 100);
+    return () => window.clearInterval(i);
+    // Guard: if user clicks Next on Step 1 but form is invalid, show inline errors via RHF
+    useEffect(() => {
+      if (currentStep !== 1) return;
+      const bn = document.getElementById('batchName') as HTMLInputElement | null;
+      const ap = document.getElementById('approver') as HTMLSelectElement | null;
+      const fi = document.getElementById('file') as HTMLInputElement | null;
+      // If any are missing, do nothing; Step1 handles errors on submit
+    }, [currentStep]);
+  }, [currentStep]);
+
   const step1Ref = useRef<Step1DetailsRef>(null);
 
   const handleClose = () => {
@@ -56,6 +89,10 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
   };
 
   const canProceed = () => {
+    if (currentStep === 1) {
+      // Always allow clicking Next; the form submit will block and show errors if invalid.
+      return true;
+    }
     if (currentStep === 3) {
       return parsedRecords.some((record) => record.isValid);
     }
@@ -144,6 +181,7 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
                     onClick={handleSubmit}
                     disabled={!canProceed()}
                     data-testid="submit-batch-btn"
+                    aria-label="Submit Batch"
                   >
                     Submit Batch
                   </Button>
