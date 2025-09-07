@@ -11,7 +11,7 @@ vi.mock('papaparse', () => ({
   },
 }));
 
-describe('Step2_Review — parse error path', () => {
+describe('Step2_Review - parse error path', () => {
   it('handles parse error by clearing loading and rendering stable UI', async () => {
     const file = new File(['bad'], 'bad.csv', { type: 'text/csv' });
     useBatchTransferStore.getState().reset();

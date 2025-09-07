@@ -1,8 +1,8 @@
 /**
  * BatchTransferModal
- * - Wraps a 3-step batch transfer workflow in a Chakra Dialog
- * - Controls step navigation and submission via Zustand store
- * - Does not validate Step 1 directly; it triggers Step1_Details form submit
+ * Wraps a three step batch transfer flow in a Chakra Dialog.
+ * Controls step navigation and submission via the Zustand store.
+ * Step 1 validation happens in Step1_Details; we trigger that form submit here.
  */
 import { Dialog, Button, Stack, Box, Portal } from '@chakra-ui/react';
 import { useRef } from 'react';
@@ -25,13 +25,13 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
   const step1Ref = useRef<Step1DetailsRef>(null);
 
   const handleClose = () => {
-    reset(); // Reset store when closing
+    reset(); // Reset store on close
     onOpenChange({ open: false });
   };
 
   const handleNext = () => {
     if (currentStep === 1) {
-      // Trigger Step 1 form submission
+      // Trigger submit on Step 1 form
       step1Ref.current?.triggerSubmit();
     } else {
       nextStep();
@@ -40,7 +40,7 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
 
   const handleSubmit = () => {
     if (onSubmit) {
-      // Convert valid parsed records to Transaction format
+      // Build Transaction objects from valid rows
       const validTransactions: Transaction[] = parsedRecords
         .filter((record) => record.isValid)
         .map((record, index) => ({
@@ -64,7 +64,7 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
 
   const canProceed = () => {
     if (currentStep === 1) {
-      // Always allow clicking Next; the form submit will block and show errors if invalid.
+      // Allow Next; Step 1 form blocks and shows errors if invalid
       return true;
     }
     if (currentStep === 3) {

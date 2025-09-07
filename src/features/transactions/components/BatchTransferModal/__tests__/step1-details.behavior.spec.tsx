@@ -7,7 +7,7 @@ import { useBatchTransferStore } from '../useBatchTransferStore';
 
 const getStore = () => useBatchTransferStore.getState();
 
-describe('Step1_Details — validation and file handling', () => {
+describe('Step1_Details - validation and file handling', () => {
   beforeEach(() => {
     useBatchTransferStore.getState().reset();
   });
