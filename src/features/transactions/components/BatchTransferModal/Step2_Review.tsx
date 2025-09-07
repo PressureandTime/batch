@@ -18,7 +18,7 @@ export const Step2_Review = () => {
   const [onlyInvalid, setOnlyInvalid] = useState(false);
   const isPending = false;
 
-  // Memoize derived rows and counts for responsiveness
+  // Derived rows and counts
   const rows = useMemo(
     () => (onlyInvalid ? parsedRecords.filter((r) => !r.isValid) : parsedRecords),
     [parsedRecords, onlyInvalid]
@@ -60,7 +60,7 @@ export const Step2_Review = () => {
             if (!isActive) return;
             progressed += 1;
 
-            // Normalize keys before validation to tolerate case/space variations of canonical headers
+            // Normalize keys before validation
             const normalized = normalizeRowKeys(result.data as CsvRow);
 
             const validation = transactionSchema.safeParse(normalized);
@@ -92,7 +92,7 @@ export const Step2_Review = () => {
               });
             }
 
-            // Incremental UI updates to make review table visible early and responsive
+            // Show some rows quickly, then update in batches
             if (results.length === FIRST_BATCH_SIZE) {
               setParsedRecords([...results]);
               setIsLoading(false);
@@ -114,7 +114,7 @@ export const Step2_Review = () => {
 
             if (watchdogId) window.clearTimeout(watchdogId);
             if (useWorker) {
-              // Fallback: retry without worker (some environments disallow workers in tests)
+              // Retry without worker if needed
               run(false);
             } else {
               setIsLoading(false);
@@ -122,13 +122,12 @@ export const Step2_Review = () => {
           },
         };
 
-        // The config discriminated union is tricky with worker on/off; cast narrowly here.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         currentParser = Papa.parse(file as File, config as any) as unknown as {
           abort?: () => void;
         };
 
-        // Watchdog: if worker parse makes no progress quickly, abort and retry without worker
+        // Watchdog to fallback if worker stalls
         if (useWorker) {
           watchdogId = window.setTimeout(() => {
             if (!isActive) return;

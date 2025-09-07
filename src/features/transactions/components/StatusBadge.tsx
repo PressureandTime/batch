@@ -1,27 +1,17 @@
 import { Badge, Tooltip } from '@chakra-ui/react';
 import type { TransactionStatus } from '../types';
 
-/** Props for StatusBadge */
 interface StatusBadgeProps {
-  /** Status text to render */
   status: TransactionStatus;
-  /** Optional error message for Failed status; shown in tooltip */
   errorMessage?: string;
 }
 
-/**
- * Map transaction status to Chakra color palette names.
- */
 const statusColorMap: Record<TransactionStatus, string> = {
   Pending: 'yellow',
   Settled: 'green',
   Failed: 'red',
 };
 
-/**
- * Renders a status badge. When status is Failed and errorMessage exists,
- * wraps with a Tooltip displaying the message.
- */
 export const StatusBadge = ({ status, errorMessage }: StatusBadgeProps) => {
   const colorPalette = statusColorMap[status];
 

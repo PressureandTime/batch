@@ -15,34 +15,55 @@ import {
   useState,
 } from 'react';
 
-// Approvers list as specified in requirements
 const approvers = ['Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown', 'Emma Davis'];
 
-// Cross-environment FileList guard (Playwright/headless friendly)
+// FileList guard usable in browser and JSDOM
 const isFileList = (val: unknown): val is FileList => {
   try {
     if (typeof FileList !== 'undefined' && val instanceof FileList) return true;
   } catch {
-    /* ignore cross-realm instanceof issues */
+    // cross-realm instanceof issues
   }
   const maybe = val as { length: number; item: (index: number) => unknown } | null | undefined;
   return !!maybe && typeof maybe.length === 'number' && typeof maybe.item === 'function';
 };
 
-// Zod validation schema
-const step1Schema = z.object({
-  batchName: z.string().min(1, 'Batch name is required'),
-  approver: z.string().min(1, 'Approver selection is required'),
-  file: z
-    .custom<FileList>(isFileList, 'Invalid file input')
-    .refine((files) => files.length > 0, 'File is required')
-    .refine(
-      (files) => files[0]?.type === 'text/csv' || files[0]?.name.endsWith('.csv'),
-      'Only CSV files are allowed'
-    ),
-});
+// Schema permits reusing stored file on back navigation
+export type Step1FormData = {
+  batchName: string;
+  approver: string;
+  file: FileList | null | undefined;
+};
 
-type Step1FormData = z.infer<typeof step1Schema>;
+export const makeStep1Schema = (hasStoredFile: boolean) =>
+  z.object({
+    batchName: z.string().min(1, 'Batch name is required'),
+    approver: z.string().min(1, 'Approver selection is required'),
+    // Accept empty input if a file is already stored
+    file: z.any().superRefine((val, ctx) => {
+      const allowEmpty = hasStoredFile;
+      // If a file is already in store and nothing new is chosen, allow
+      if (allowEmpty && (val == null || (isFileList(val) && val.length === 0))) {
+        return;
+      }
+
+      if (!isFileList(val)) {
+        ctx.addIssue({ code: 'custom', message: 'Invalid file input' });
+        return;
+      }
+
+      if (!val || val.length === 0) {
+        ctx.addIssue({ code: 'custom', message: 'File is required' });
+        return;
+      }
+
+      const f = val[0];
+      const isCsv = f?.type === 'text/csv' || f?.name?.endsWith('.csv');
+      if (!isCsv) {
+        ctx.addIssue({ code: 'custom', message: 'Only CSV files are allowed' });
+      }
+    }),
+  });
 
 interface Step1DetailsProps {
   onSubmit?: () => void;
@@ -65,6 +86,8 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const step1Schema = useMemo(() => makeStep1Schema(!!storedFile), [storedFile]);
+
   const {
     register,
     handleSubmit,
@@ -81,12 +104,11 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     },
   });
 
-  // Keep a stable registration reference for file input so we can merge events
   const fileReg = register('file');
 
   const [selectedName, setSelectedName] = useState<string>('');
 
-  // Local validity recomputation to handle Zod + RHF + file timing in headless browsers
+  // Keep validity in sync with both RHF values and native inputs
   const recomputeValidity = useCallback(() => {
     const vals = getValues();
     const rhfHasFile = isFileList(vals.file) && vals.file.length > 0;
@@ -110,11 +132,9 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
   }, [getValues, setStep1Validity]);
 
   useEffect(() => {
-    // Initialize and keep in sync as user edits fields
     recomputeValidity();
     const sub = watch(() => recomputeValidity());
     return () => {
-      // Guard: watch() may return a cleanup function or a subscription with unsubscribe()
       const maybe = sub as unknown as { unsubscribe?: () => void } | (() => void) | undefined;
       if (typeof maybe === 'function') {
         try {
@@ -128,7 +148,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     };
   }, [watch, recomputeValidity]);
 
-  // Ensure validity recomputes on native DOM events as well (headless-friendly)
+  // Also listen to native input events
   useEffect(() => {
     const bn = document.getElementById('batchName');
     const ap = document.getElementById('approver');
@@ -145,11 +165,10 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     };
   }, [recomputeValidity]);
 
-  // Keep selected file name in sync with store
   useEffect(() => {
     setSelectedName(storedFile?.name ?? '');
   }, [storedFile]);
-  // Native change listener to update selectedName directly from DOM input (robust in headless)
+  // Sync selectedName from DOM input
   useEffect(() => {
     const fi = document.getElementById('file') as HTMLInputElement | null;
     if (!fi) return;
@@ -161,7 +180,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     fi.addEventListener('change', updateName);
     return () => fi.removeEventListener('change', updateName);
   }, []);
-  // Update selected file name when RHF 'file' value changes (headless-friendly)
+  // Sync selectedName when RHF file changes
   useEffect(() => {
     const sub = watch((vals: Partial<Step1FormData>) => {
       try {
@@ -186,7 +205,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     };
   }, [watch]);
 
-  // Randomize approver order once; set a default if none selected yet
+  // Set a default approver if none selected
   useEffect(() => {
     if (!approver && randomizedApprovers[0]) {
       setValue('approver', randomizedApprovers[0]);
@@ -194,43 +213,36 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
   }, [approver, randomizedApprovers, setValue]);
 
   const onFormSubmit = (data: Step1FormData) => {
-    // Headless-safe: fallback to DOM input if RHF value is missing
-    let fileList: FileList | null = data.file;
+    // File fallback: RHF → DOM → stored
+    let fileList: FileList | null = data.file ?? null;
     if (!fileList || fileList.length === 0) {
       const domFiles = (document.getElementById('file') as HTMLInputElement | null)?.files ?? null;
       if (domFiles && domFiles.length > 0) fileList = domFiles;
     }
 
-    const selectedFile = fileList?.[0] ?? null;
+    const selectedFile = fileList?.[0] ?? storedFile ?? null;
 
-    // Update Zustand store with form data (file may be null; Step2 will handle null guard)
     setStep1Data({
       batchName: data.batchName,
       approver: data.approver,
       file: selectedFile,
     });
 
-    // Advance to next step (even if selectedFile is null, Step2 shows spinner only when file present)
     nextStep();
-
-    // Call external onSubmit if provided
     onSubmit?.();
   };
 
-  // Also guard against native form submission bypassing RHF
+  // Guard native submission path
   useEffect(() => {
     const el = formRef.current;
     if (!el) return;
     const handler = () => {
-      // Let RHF/our handler run via onSubmit; no-op here.
-      // But we can re-check validity after submit to be safe.
       setTimeout(recomputeValidity, 0);
     };
     el.addEventListener('submit', handler);
     return () => el.removeEventListener('submit', handler);
   }, [recomputeValidity]);
 
-  // Expose submit function for external triggering via ref
   useImperativeHandle(ref, () => ({
     triggerSubmit: () => {
       hiddenSubmitRef.current?.click();
@@ -271,16 +283,13 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
                 type="file"
                 accept=".csv"
                 onChange={(e) => {
-                  // First pass event to RHF
                   fileReg.onChange(e);
                   const fl = (e.target as HTMLInputElement).files;
                   if (fl) {
-                    // Ensure RHF value is synchronized
                     setValue('file', fl as unknown as FileList, { shouldValidate: true });
                     const name = fl.length > 0 ? fl[0].name : '';
                     setSelectedName(name);
                   }
-                  // Then recompute validity (microtask)
                   setTimeout(recomputeValidity, 0);
                 }}
                 style={{ paddingTop: '4px' }}
