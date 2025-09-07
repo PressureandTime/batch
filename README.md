@@ -35,6 +35,11 @@ Prerequisites: Node and npm.
 - Run unit tests: `npm run test`
 - Run e2e tests: `npm run test:e2e` (Playwright starts the dev server automatically)
 
+Playwright browsers:
+
+- Browsers are installed automatically during `npm install` (postinstall runs `playwright install`).
+- Linux only: if your system is missing shared libraries, run `npx playwright install-deps` once (may require sudo).
+
 ## Usage
 
 1. Start the app and open the home page
