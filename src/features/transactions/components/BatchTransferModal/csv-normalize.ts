@@ -1,30 +1,41 @@
-/**
- * CSV header normalization helpers.
- * Rules:
- * - Trim whitespace
- * - Collapse repeated spaces to one
- * - Match canonical headers case-insensitively
- * - Canonical headers: Transaction Date, Account Number, Account Holder Name, Amount
- * - Synonyms: common alternatives like "Txn Date" will be normalized to canonical headers
- */
+/** CSV header normalization helpers. */
 
 export type CsvRow = Record<string, unknown>;
+
+import { STRICT_HEADER_MODE } from '../../../../config/csv-validation';
 
 /** Normalize a header for matching (trim, collapse spaces, lowercase). */
 const normalizeForMatch = (key: string): string => key.trim().replace(/\s+/g, ' ').toLowerCase();
 
-const headerMap = new Map<string, string>([
-  // Canonical headers
-  [normalizeForMatch('Transaction Date'), 'Transaction Date'],
-  [normalizeForMatch('Account Number'), 'Account Number'],
-  [normalizeForMatch('Account Holder Name'), 'Account Holder Name'],
-  [normalizeForMatch('Amount'), 'Amount'],
+const buildHeaderMap = (strict: boolean): Map<string, string> => {
+  const map = new Map<string, string>([
+    [normalizeForMatch('Transaction Date'), 'Transaction Date'],
+    [normalizeForMatch('Account Number'), 'Account Number'],
+    [normalizeForMatch('Account Holder Name'), 'Account Holder Name'],
+    [normalizeForMatch('Amount'), 'Amount'],
+  ]);
 
-  // Synonyms → canonical
-  [normalizeForMatch('Txn Date'), 'Transaction Date'],
-  [normalizeForMatch('Acct Number'), 'Account Number'],
-  [normalizeForMatch('Name'), 'Account Holder Name'],
-]);
+  if (!strict) {
+    // Synonyms → canonical (permissive mode only)
+    map.set(normalizeForMatch('Txn Date'), 'Transaction Date');
+    map.set(normalizeForMatch('Acct Number'), 'Account Number');
+    map.set(normalizeForMatch('Name'), 'Account Holder Name');
+  }
+
+  return map;
+};
+
+let strictHeaderMap: Map<string, string> | null = null;
+let permissiveHeaderMap: Map<string, string> | null = null;
+
+const getHeaderMap = (): Map<string, string> => {
+  if (STRICT_HEADER_MODE) {
+    if (!strictHeaderMap) strictHeaderMap = buildHeaderMap(true);
+    return strictHeaderMap;
+  }
+  if (!permissiveHeaderMap) permissiveHeaderMap = buildHeaderMap(false);
+  return permissiveHeaderMap;
+};
 
 /**
  * Returns a new object with keys normalized to canonical headers where applicable.
@@ -32,8 +43,9 @@ const headerMap = new Map<string, string>([
  */
 export const normalizeRowKeys = (row: CsvRow): CsvRow => {
   const out: CsvRow = {};
+  const map = getHeaderMap();
   for (const [rawKey, value] of Object.entries(row)) {
-    const normalizedKey = headerMap.get(normalizeForMatch(rawKey)) ?? rawKey;
+    const normalizedKey = map.get(normalizeForMatch(rawKey)) ?? rawKey;
     if (!(normalizedKey in out)) {
       out[normalizedKey] = value;
     }
