@@ -17,12 +17,12 @@ import {
 
 const approvers = ['Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown', 'Emma Davis'];
 
-// FileList guard usable in browser and JSDOM
+// FileList guard (browser/JSDOM)
 const isFileList = (val: unknown): val is FileList => {
   try {
     if (typeof FileList !== 'undefined' && val instanceof FileList) return true;
   } catch {
-    // cross-realm instanceof issues
+    /* noop */
   }
   const maybe = val as { length: number; item: (index: number) => unknown } | null | undefined;
   return !!maybe && typeof maybe.length === 'number' && typeof maybe.item === 'function';
@@ -39,10 +39,9 @@ export const makeStep1Schema = (hasStoredFile: boolean) =>
   z.object({
     batchName: z.string().min(1, 'Batch name is required'),
     approver: z.string().min(1, 'Approver selection is required'),
-    // Accept empty input if a file is already stored
+    // Allow empty file when reusing stored file (back-nav)
     file: z.any().superRefine((val, ctx) => {
       const allowEmpty = hasStoredFile;
-      // If a file is already in store and nothing new is chosen, allow
       if (allowEmpty && (val == null || (isFileList(val) && val.length === 0))) {
         return;
       }
@@ -108,7 +107,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
 
   const [selectedName, setSelectedName] = useState<string>('');
 
-  // Keep validity in sync with both RHF values and native inputs
+  // Keep validity in sync with RHF and native inputs
   const recomputeValidity = useCallback(() => {
     const vals = getValues();
     const rhfHasFile = isFileList(vals.file) && vals.file.length > 0;
@@ -148,7 +147,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     };
   }, [watch, recomputeValidity]);
 
-  // Also listen to native input events
+  // Listen to native input changes
   useEffect(() => {
     const bn = document.getElementById('batchName');
     const ap = document.getElementById('approver');
@@ -287,13 +286,11 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
                 }}
                 style={{ paddingTop: '4px' }}
               />
-              {/* Visual feedback for selected file (always present for stable e2e) */}
               <Step1SelectedFileName selectedName={selectedName} />
               <Field.ErrorText>{errors.file?.message}</Field.ErrorText>
             </Field.Root>
           </SimpleGrid>
 
-          {/* Hidden submit button for external triggering */}
           <Button ref={hiddenSubmitRef} type="submit" display="none" aria-hidden="true">
             Submit
           </Button>

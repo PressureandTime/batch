@@ -5,7 +5,7 @@ import { useBatchTransferStore } from './useBatchTransferStore';
 export const Step3_Summary = () => {
   const { batchName, approver, parsedRecords } = useBatchTransferStore();
 
-  // Calculate statistics using useMemo for performance
+  // Compute statistics
   const statistics = useMemo(() => {
     const validRecords = parsedRecords.filter((record) => record.isValid);
 
@@ -35,7 +35,7 @@ export const Step3_Summary = () => {
     };
   }, [parsedRecords]);
 
-  // Format currency with proper decimal places
+  // Format currency
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -51,7 +51,7 @@ export const Step3_Summary = () => {
         Batch Transfer - Step 3 of 3
       </Text>
 
-      {/* Batch Information Section */}
+      {/* Batch Information */}
       <Stack gap={4} mb={6}>
         <Text fontSize="md" fontWeight="bold">
           Batch Information
@@ -71,7 +71,7 @@ export const Step3_Summary = () => {
 
       <Separator mb={6} />
 
-      {/* Statistics Section */}
+      {/* Statistics */}
       <Stack gap={4} mb={6}>
         <Text fontSize="md" fontWeight="bold">
           Transaction Statistics
@@ -124,7 +124,7 @@ export const Step3_Summary = () => {
         )}
       </Stack>
 
-      {/* Final Confirmation Message */}
+      {/* Final Confirmation */}
       {statistics.numberOfPayments > 0 && (
         <Box p={4} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
           <Text color="blue.800" fontWeight="medium">
