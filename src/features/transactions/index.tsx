@@ -58,7 +58,9 @@ export const TransactionsPage = () => {
       const params = new URL(window.location.href).searchParams;
       const fromUrl = parseInt(params.get('page') || '', 10);
       if (Number.isFinite(fromUrl) && fromUrl > 0) return fromUrl;
-    } catch {}
+    } catch {
+      /* noop */
+    }
     const saved = localStorage.getItem('txPage');
     return saved ? Math.max(1, parseInt(saved, 10) || 1) : 1;
   });
@@ -67,7 +69,9 @@ export const TransactionsPage = () => {
       const params = new URL(window.location.href).searchParams;
       const fromUrl = parseInt(params.get('pageSize') || '', 10);
       if (Number.isFinite(fromUrl) && fromUrl > 0) return fromUrl;
-    } catch {}
+    } catch {
+      /* noop */
+    }
     const saved = localStorage.getItem('txItemsPerPage');
     return saved ? Math.max(1, parseInt(saved, 10) || 10) : 10;
   });
