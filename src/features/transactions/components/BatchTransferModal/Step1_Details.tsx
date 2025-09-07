@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Box, Button, Field, Input, Stack, Text, SimpleGrid } from '@chakra-ui/react';
+import { Step1ApproverField } from './Step1ApproverField';
+import { Step1SelectedFileName } from './Step1SelectedFileName';
 import { useBatchTransferStore } from './useBatchTransferStore';
 import {
   useRef,
@@ -20,9 +22,11 @@ const approvers = ['Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown'
 const isFileList = (val: unknown): val is FileList => {
   try {
     if (typeof FileList !== 'undefined' && val instanceof FileList) return true;
-  } catch {}
-  const v = val as any;
-  return !!v && typeof v.length === 'number' && typeof v.item === 'function';
+  } catch {
+    /* ignore cross-realm instanceof issues */
+  }
+  const maybe = val as { length: number; item: (index: number) => unknown } | null | undefined;
+  return !!maybe && typeof maybe.length === 'number' && typeof maybe.item === 'function';
 };
 
 // Zod validation schema
@@ -110,8 +114,17 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     recomputeValidity();
     const sub = watch(() => recomputeValidity());
     return () => {
-      // Optional chaining in case RHF returns a non-subscription in some versions
-      (sub as any)?.unsubscribe?.();
+      // Guard: watch() may return a cleanup function or a subscription with unsubscribe()
+      const maybe = sub as unknown as { unsubscribe?: () => void } | (() => void) | undefined;
+      if (typeof maybe === 'function') {
+        try {
+          maybe();
+        } catch {
+          /* noop */
+        }
+      } else if (maybe && typeof maybe.unsubscribe === 'function') {
+        maybe.unsubscribe();
+      }
     };
   }, [watch, recomputeValidity]);
 
@@ -150,17 +163,26 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
   }, []);
   // Update selected file name when RHF 'file' value changes (headless-friendly)
   useEffect(() => {
-    const sub = watch((vals) => {
+    const sub = watch((vals: Partial<Step1FormData>) => {
       try {
-        const files = (vals as any)?.file as FileList | undefined;
-        const name = files && (files as any).length > 0 ? (files as any)[0]?.name ?? '' : '';
+        const files = vals.file;
+        const name = files && files.length > 0 ? files[0]?.name ?? '' : '';
         if (name) setSelectedName(name);
       } catch {
         // no-op
       }
     });
     return () => {
-      (sub as any)?.unsubscribe?.();
+      const maybe = sub as unknown as { unsubscribe?: () => void } | (() => void) | undefined;
+      if (typeof maybe === 'function') {
+        try {
+          maybe();
+        } catch {
+          /* noop */
+        }
+      } else if (maybe && typeof maybe.unsubscribe === 'function') {
+        maybe.unsubscribe();
+      }
     };
   }, [watch]);
 
@@ -235,31 +257,11 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
               <Field.ErrorText>{errors.batchName?.message}</Field.ErrorText>
             </Field.Root>
 
-            <Field.Root invalid={!!errors.approver}>
-              <Field.Label htmlFor="approver">Approver</Field.Label>
-              <select
-                id="approver"
-                data-testid="approver-select"
-                {...register('approver')}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  backgroundColor: 'white',
-                  color: '#1a202c',
-                }}
-              >
-                <option value="">Select an approver</option>
-                {randomizedApprovers.map((approverName) => (
-                  <option key={approverName} value={approverName}>
-                    {approverName}
-                  </option>
-                ))}
-              </select>
-              <Field.ErrorText>{errors.approver?.message}</Field.ErrorText>
-            </Field.Root>
+            <Step1ApproverField
+              randomizedApprovers={randomizedApprovers}
+              register={register('approver')}
+              errorMessage={errors.approver?.message}
+            />
 
             <Field.Root invalid={!!errors.file} gridColumn={{ base: 'auto', md: '1 / -1' }}>
               <Field.Label htmlFor="file">CSV File</Field.Label>
@@ -284,19 +286,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
                 style={{ paddingTop: '4px' }}
               />
               {/* Visual feedback for selected file (always present for stable e2e) */}
-              <Box
-                mt={2}
-                px={3}
-                py={2}
-                borderWidth="1px"
-                borderRadius="md"
-                bg="gray.50"
-                color="gray.700"
-                aria-live="polite"
-                data-testid="selected-file-name"
-              >
-                Selected file: {selectedName || 'No file selected'}
-              </Box>
+              <Step1SelectedFileName selectedName={selectedName} />
               <Field.ErrorText>{errors.file?.message}</Field.ErrorText>
             </Field.Root>
           </SimpleGrid>

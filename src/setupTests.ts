@@ -2,12 +2,11 @@ import '@testing-library/jest-dom';
 
 // Polyfill missing APIs in jsdom used by Chakra floating-ui tooltips
 class ResizeObserverPolyfill {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
 }
-// @ts-ignore
-if (typeof (globalThis as any).ResizeObserver === 'undefined') {
-  // @ts-ignore
-  (globalThis as any).ResizeObserver = ResizeObserverPolyfill;
+if (typeof (globalThis as unknown as { ResizeObserver?: unknown }).ResizeObserver === 'undefined') {
+  (globalThis as unknown as { ResizeObserver?: unknown }).ResizeObserver =
+    ResizeObserverPolyfill as unknown;
 }

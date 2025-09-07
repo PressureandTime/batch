@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
-import { Box, Text, Table, Spinner, Center, Stack } from '@chakra-ui/react';
-import { StatusIndicator } from './StatusIndicator';
-import { RowView } from './RowView';
+import { Box, Text, Spinner, Center, Stack } from '@chakra-ui/react';
 import type { ParseStepResult } from 'papaparse';
+import { Step2ReviewControls } from './Step2ReviewControls';
+import { Step2ReviewTable } from './Step2ReviewTable';
 
 type CsvRow = Record<string, unknown>;
 
@@ -19,8 +18,6 @@ export const Step2_Review = () => {
   const [onlyInvalid, setOnlyInvalid] = useState(false);
   const isPending = false;
 
-  const parentRef = useRef<HTMLDivElement | null>(null);
-
   // Memoize derived rows and counts for responsiveness
   const rows = useMemo(
     () => (onlyInvalid ? parsedRecords.filter((r) => !r.isValid) : parsedRecords),
@@ -31,15 +28,6 @@ export const Step2_Review = () => {
     () => parsedRecords.length - validCount,
     [parsedRecords.length, validCount]
   );
-
-  // Enable virtualization for medium+ datasets
-  const useVirtual = rows.length > 300;
-  // Always call useVirtualizer to respect Rules of Hooks; choose whether to use it based on useVirtual
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
-  });
 
   useEffect(() => {
     if (!file) return;
@@ -87,7 +75,20 @@ export const Step2_Review = () => {
               results.push({
                 data: normalized as Record<string, unknown>,
                 isValid: false,
-                errors: validation.error.flatten().fieldErrors,
+                errors: validation.error.issues.reduce<Record<string, string[]>>(
+                  (
+                    acc: Record<string, string[]>,
+                    issue: { path: Array<string | number | symbol>; message: string }
+                  ) => {
+                    const key = issue.path?.[0];
+                    if (typeof key === 'string') {
+                      if (!acc[key]) acc[key] = [];
+                      acc[key].push(issue.message);
+                    }
+                    return acc;
+                  },
+                  {}
+                ),
               });
             }
 
@@ -108,7 +109,7 @@ export const Step2_Review = () => {
             setParsedRecords([...results]);
             setIsLoading(false);
           },
-          error: (error: unknown) => {
+          error: () => {
             if (!isActive) return;
 
             if (watchdogId) window.clearTimeout(watchdogId);
@@ -134,7 +135,9 @@ export const Step2_Review = () => {
             if (progressed === 0) {
               try {
                 currentParser?.abort?.();
-              } catch {}
+              } catch {
+                /* noop */
+              }
               run(false);
             }
           }, 5000);
@@ -152,7 +155,9 @@ export const Step2_Review = () => {
       if (watchdogId) window.clearTimeout(watchdogId);
       try {
         currentParser?.abort?.();
-      } catch {}
+      } catch {
+        /* noop */
+      }
     };
   }, [file, setParsedRecords]);
 
@@ -173,123 +178,15 @@ export const Step2_Review = () => {
         </Center>
       ) : null}
 
-      <Stack gap={4} mb={6}>
-        <Text fontWeight="bold">Validation Results:</Text>
-        <Stack direction="row" gap={6} align="center">
-          <Text color="green.500" data-testid="valid-count">
-            {validCount} valid records
-          </Text>
-          <Text color="red.500" data-testid="invalid-count">
-            {invalidCount} invalid records
-          </Text>
-          <Stack direction="row" align="center" ml="auto">
-            <input
-              type="checkbox"
-              data-testid="only-invalid-toggle"
-              checked={onlyInvalid}
-              onChange={(e) => setOnlyInvalid(e.target.checked)}
-            />
-            <span>Show only invalid</span>
-            {isPending ? (
-              <Text
-                as="span"
-                fontSize="sm"
-                color="gray.500"
-                ml={3}
-                data-testid="filtering-indicator"
-              >
-                Filtering...
-              </Text>
-            ) : null}
-          </Stack>
-        </Stack>
-      </Stack>
+      <Step2ReviewControls
+        validCount={validCount}
+        invalidCount={invalidCount}
+        onlyInvalid={onlyInvalid}
+        onToggleOnlyInvalid={(checked) => setOnlyInvalid(checked)}
+        isPending={isPending}
+      />
 
-      <Box
-        borderWidth="1px"
-        borderRadius="lg"
-        maxH={{ base: '350px', md: '420px', lg: '520px' }}
-        minH="150px"
-        overflowY="auto"
-        overflowX="auto"
-        pr={{ base: 4, md: 6 }}
-        data-testid="review-table"
-        ref={parentRef}
-      >
-        <Table.Root variant="outline" size="sm">
-          <Table.Header position="sticky" top={0} bg="white" zIndex={1}>
-            <Table.Row>
-              <Table.ColumnHeader w="80px">Status</Table.ColumnHeader>
-              <Table.ColumnHeader minW="140px">Transaction Date</Table.ColumnHeader>
-              <Table.ColumnHeader minW="220px">Account Number</Table.ColumnHeader>
-              <Table.ColumnHeader minW="220px">Account Holder Name</Table.ColumnHeader>
-              <Table.ColumnHeader minW="120px" textAlign="end" whiteSpace="nowrap">
-                Amount
-              </Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          {rows.length === 0 && (
-            <Table.Body>
-              <Table.Row>
-                <Table.Cell colSpan={5}>
-                  <Text color="gray.500">Loading rows...</Text>
-                </Table.Cell>
-              </Table.Row>
-            </Table.Body>
-          )}
-
-          {useVirtual ? (
-            <Table.Body>
-              <Table.Row>
-                <Table.Cell colSpan={5} p={0}>
-                  <Box position="relative" height={`${rowVirtualizer!.getTotalSize()}px`}>
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      transform={`translateY(${
-                        rowVirtualizer!.getVirtualItems()[0]?.start ?? 0
-                      }px)`}
-                    >
-                      {rowVirtualizer!.getVirtualItems().map((v) => (
-                        <RowView key={v.key} record={rows[v.index]} />
-                      ))}
-                    </Box>
-                  </Box>
-                </Table.Cell>
-              </Table.Row>
-            </Table.Body>
-          ) : (
-            <Table.Body>
-              {rows.map((record, index) => (
-                <Table.Row
-                  key={index}
-                  bg={!record.isValid ? 'red.50' : 'transparent'}
-                  data-testid="review-row"
-                >
-                  <Table.Cell>
-                    <StatusIndicator isValid={record.isValid} errors={record.errors} />
-                  </Table.Cell>
-                  <Table.Cell>{String(record.data['Transaction Date'] ?? '')}</Table.Cell>
-                  <Table.Cell fontFamily="mono">
-                    {String(record.data['Account Number'] ?? '')}
-                  </Table.Cell>
-                  <Table.Cell>{String(record.data['Account Holder Name'] ?? '')}</Table.Cell>
-                  <Table.Cell
-                    textAlign="end"
-                    pr={{ base: 2, md: 3 }}
-                    whiteSpace="nowrap"
-                    color="gray.800"
-                  >
-                    {String(record.data['Amount'] ?? '')}
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          )}
-        </Table.Root>
-      </Box>
+      <Step2ReviewTable rows={rows} />
     </Box>
   );
 };

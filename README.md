@@ -1,69 +1,57 @@
-# React + TypeScript + Vite
+# Batch Transaction Processor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript + Vite app for uploading a CSV of bank transactions, validating the data, and reviewing a 3‑step batch transfer flow.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19, TypeScript (strict), Vite
+- Chakra UI for accessible UI primitives
+- Zustand for local state
+- Zod for validation
+- Vitest + Testing Library for unit tests
+- Playwright for end‑to‑end tests
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Install deps: `npm install`
+- Start dev server: `npm run dev`
+- Type check + build: `npm run build`
+- Unit tests: `npm run test`
+- E2E tests: `npm run test:e2e`
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Structure (high‑level)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- `src/features/transactions/components/BatchTransferModal`
+  - Step1_Details: step 1 form (batch name, approver, CSV upload)
+    - Step1ApproverField: Approver select subcomponent
+    - Step1SelectedFileName: Selected file display
+  - Step2_Review: CSV parsing + validation + review table
+    - Step2ReviewControls: Counts + filter toggle
+    - Step2ReviewTable: Virtualized/regular table rendering
+  - Step3_Summary: summary stats and confirmation
+- `src/features/transactions/components/TransactionsTable`: list of processed transactions
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## CSV Expectations
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Headers (case/spacing tolerant via normalization):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Transaction Date (YYYY-MM-DD)
+- Account Number (format: 000-000000000-00)
+- Account Holder Name
+- Amount
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Invalid rows display field‑level errors in the review step.
+
+## Testing Notes
+
+- Unit tests (Vitest) cover parsing/validation and UI behavior
+- Playwright suite exercises full flow including 10k‑row CSVs
+
+## Accessibility & Responsiveness
+
+- Uses Chakra UI semantics and roles
+- Tables are horizontally scrollable on small screens
+
+## License
+
+MIT

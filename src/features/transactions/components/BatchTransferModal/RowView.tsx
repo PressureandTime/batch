@@ -1,4 +1,4 @@
-import { Box, Text } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import type { ParsedRecord } from '../../types';
 import { StatusIndicator } from './StatusIndicator';
 
@@ -32,4 +32,3 @@ export const RowView = ({ record }: RowViewProps) => {
     </Box>
   );
 };
-
