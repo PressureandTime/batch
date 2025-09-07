@@ -21,7 +21,7 @@ describe('normalizeRowKeys', () => {
     expect(normalized['Amount']).toBe('100.00');
   });
 
-  it('does not convert non-canonical synonyms', () => {
+  it('normalizes common synonyms to canonical headers', () => {
     const row = {
       'Txn Date': '2025-02-20',
       'Acct Number': '000-123456789-01',
@@ -31,10 +31,15 @@ describe('normalizeRowKeys', () => {
 
     const normalized = normalizeRowKeys(row);
 
-    expect(normalized['Txn Date']).toBe('2025-02-20');
-    expect(normalized['Acct Number']).toBe('000-123456789-01');
-    expect(normalized['Name']).toBe('John Doe');
+    expect(Object.keys(normalized)).toEqual([
+      'Transaction Date',
+      'Account Number',
+      'Account Holder Name',
+      'Amount',
+    ]);
+    expect(normalized['Transaction Date']).toBe('2025-02-20');
+    expect(normalized['Account Number']).toBe('000-123456789-01');
+    expect(normalized['Account Holder Name']).toBe('John Doe');
     expect(normalized['Amount']).toBe('100.00');
   });
 });
-
