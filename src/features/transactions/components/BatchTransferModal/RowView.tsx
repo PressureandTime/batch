@@ -6,7 +6,6 @@ export interface RowViewProps {
   record: ParsedRecord;
 }
 
-// Non-table row view used inside the virtualized path (grid-based)
 export const RowView = ({ record }: RowViewProps) => {
   return (
     <Box

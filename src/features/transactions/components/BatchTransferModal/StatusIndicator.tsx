@@ -6,11 +6,6 @@ export interface StatusIndicatorProps {
   errors: ParsedRecord['errors'];
 }
 
-/**
- * Compact status indicator used in Step 2 table.
- * - ✓ for valid
- * - Warning icon with tooltip listing field errors for invalid
- */
 export const StatusIndicator = ({ isValid, errors }: StatusIndicatorProps) => {
   if (isValid) {
     return (
@@ -59,4 +54,3 @@ export const StatusIndicator = ({ isValid, errors }: StatusIndicatorProps) => {
     </Tooltip.Root>
   );
 };
-

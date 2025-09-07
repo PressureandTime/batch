@@ -1,32 +1,14 @@
 import { z } from 'zod';
 
-/**
- * Utility to parse amount values from CSV strings.
- * - Trims whitespace
- * - Removes thousands separators (commas)
- * - Parses to number
- *
- * @param value - CSV field value for Amount (string or number)
- * @returns number (NaN for unparseable values)
- */
+// Parse amount: trim, remove commas, parse number
 export const parseCsvAmount = (value: unknown): number => {
   const str = String(value ?? '')
     .trim()
     .replace(/,/g, '');
-  const num = parseFloat(str);
-  return num;
+  return parseFloat(str);
 };
 
-/**
- * Zod validation schema for CSV transaction records.
- * Keys match CSV column headers exactly as provided by requirements.
- *
- * Fields
- * - Transaction Date: ISO YYYY-MM-DD; validated as a real calendar date
- * - Account Number: 000-000000000-00 pattern
- * - Account Holder Name: non-empty string
- * - Amount: positive number, accepts comma-separated strings; coerced to number
- */
+// CSV transaction schema
 export const transactionSchema = z.object({
   'Transaction Date': z
     .string()
