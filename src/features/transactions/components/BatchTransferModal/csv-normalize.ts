@@ -5,7 +5,7 @@
  * - Collapse repeated spaces to one
  * - Match canonical headers case-insensitively
  * - Canonical headers: Transaction Date, Account Number, Account Holder Name, Amount
- * - Synonyms (for example, "Txn Date") are not normalized
+ * - Synonyms: common alternatives like "Txn Date" will be normalized to canonical headers
  */
 
 export type CsvRow = Record<string, unknown>;
@@ -14,10 +14,16 @@ export type CsvRow = Record<string, unknown>;
 const normalizeForMatch = (key: string): string => key.trim().replace(/\s+/g, ' ').toLowerCase();
 
 const headerMap = new Map<string, string>([
+  // Canonical headers
   [normalizeForMatch('Transaction Date'), 'Transaction Date'],
   [normalizeForMatch('Account Number'), 'Account Number'],
   [normalizeForMatch('Account Holder Name'), 'Account Holder Name'],
   [normalizeForMatch('Amount'), 'Amount'],
+
+  // Synonyms → canonical
+  [normalizeForMatch('Txn Date'), 'Transaction Date'],
+  [normalizeForMatch('Acct Number'), 'Account Number'],
+  [normalizeForMatch('Name'), 'Account Holder Name'],
 ]);
 
 /**
