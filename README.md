@@ -38,7 +38,7 @@ Prerequisites: Node and npm.
 Playwright browsers:
 
 - Browsers are installed automatically during `npm install` (postinstall runs `playwright install`).
-- Linux only: if your system is missing shared libraries, run `npx playwright install-deps` once (may require sudo).
+- Linux only: if your system is missing shared libraries, run `npm run setup:e2e:linux` once (may require sudo).
 
 ## Usage
 
