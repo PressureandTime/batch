@@ -12,10 +12,21 @@ import type { ParsedRecord } from '../../types';
 import { transactionSchema } from './validation';
 import { normalizeRowKeys } from './csv-normalize';
 
+const computeFileSignature = (f: File): string => `${f.name}|${f.size}|${f.lastModified}`;
+
 export const Step2_Review = () => {
-  const { file, setParsedRecords, parsedRecords } = useBatchTransferStore();
-  const [isLoading, setIsLoading] = useState(true);
-  const [onlyInvalid, setOnlyInvalid] = useState(false);
+  const {
+    file,
+    setParsedRecords,
+    parsedRecords,
+    step2OnlyInvalid,
+    setStep2OnlyInvalid,
+    lastParsedFileSig,
+    setLastParsedFileSig,
+  } = useBatchTransferStore();
+
+  const [isLoading, setIsLoading] = useState(() => parsedRecords.length === 0);
+  const onlyInvalid = step2OnlyInvalid;
   const isPending = false;
 
   // Derived rows and counts
@@ -31,6 +42,13 @@ export const Step2_Review = () => {
 
   useEffect(() => {
     if (!file) return;
+
+    // Skip parsing if cached for this file and we already have results
+    const sig = computeFileSignature(file);
+    if (lastParsedFileSig === sig && parsedRecords.length > 0) {
+      setIsLoading(false);
+      return;
+    }
 
     let isActive = true;
     let watchdogId: number | null = null;
@@ -107,6 +125,7 @@ export const Step2_Review = () => {
             if (!isActive) return;
             if (watchdogId) window.clearTimeout(watchdogId);
             setParsedRecords([...results]);
+            setLastParsedFileSig(sig);
             setIsLoading(false);
           },
           error: () => {
@@ -158,7 +177,7 @@ export const Step2_Review = () => {
         /* noop */
       }
     };
-  }, [file, setParsedRecords]);
+  }, [file]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally limit deps to `file` to prevent re-parsing due to internal state updates (parsedRecords length or signature changes)
 
   return (
     <Box>
@@ -179,7 +198,7 @@ export const Step2_Review = () => {
         validCount={validCount}
         invalidCount={invalidCount}
         onlyInvalid={onlyInvalid}
-        onToggleOnlyInvalid={(checked) => setOnlyInvalid(checked)}
+        onToggleOnlyInvalid={(checked) => setStep2OnlyInvalid(checked)}
         isPending={isPending}
       />
 

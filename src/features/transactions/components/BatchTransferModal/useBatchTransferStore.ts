@@ -14,11 +14,17 @@ export interface BatchTransferState {
 
   // Step 2 data
   parsedRecords: ParsedRecord[];
+  // Persisted UI filter: show only invalid records in Step 2
+  step2OnlyInvalid: boolean;
+  // Cache signature for parsed file to avoid re-parsing on navigation
+  lastParsedFileSig: string | null;
 
   // Actions
   setStep1Data: (data: { batchName: string; approver: string; file: File | null }) => void;
   setStep1Validity: (isValid: boolean) => void;
   setParsedRecords: (records: ParsedRecord[]) => void;
+  setStep2OnlyInvalid: (checked: boolean) => void;
+  setLastParsedFileSig: (sig: string | null) => void;
   nextStep: () => void;
   prevStep: () => void;
   reset: () => void;
@@ -31,6 +37,8 @@ const initialState = {
   file: null,
   step1IsValid: false,
   parsedRecords: [],
+  step2OnlyInvalid: false,
+  lastParsedFileSig: null,
 };
 
 export const useBatchTransferStore = create<BatchTransferState>((set, get) => ({
@@ -50,6 +58,14 @@ export const useBatchTransferStore = create<BatchTransferState>((set, get) => ({
 
   setParsedRecords: (records) => {
     set({ parsedRecords: records });
+  },
+
+  setStep2OnlyInvalid: (checked) => {
+    set({ step2OnlyInvalid: checked });
+  },
+
+  setLastParsedFileSig: (sig) => {
+    set({ lastParsedFileSig: sig });
   },
 
   nextStep: () => {

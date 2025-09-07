@@ -4,10 +4,17 @@ import { useBatchTransferStore } from '../useBatchTransferStore';
 import { Step2_Review } from '../Step2_Review';
 import { screen, waitFor } from '@testing-library/react';
 
-let parseImpl: ((file: File, cfg: any) => any) | null = null;
+type ParseConfig = {
+  // narrow fields we actually use in tests to avoid any
+  step?: (result: { data: Record<string, unknown> }) => void;
+  complete?: () => void;
+  error: (error: unknown) => void;
+};
+
+let parseImpl: ((file: File, cfg: ParseConfig) => { abort?: () => void } | void) | null = null;
 vi.mock('papaparse', () => ({
   default: {
-    parse: (file: File, cfg: any) => parseImpl?.(file, cfg),
+    parse: (file: File, cfg: ParseConfig) => parseImpl?.(file, cfg),
   },
 }));
 
@@ -18,16 +25,16 @@ describe('Step2_Review - parse error path', () => {
     useBatchTransferStore.getState().setStep1Data({ batchName: 'b', approver: 'a', file });
 
     let first = true;
-    parseImpl = (_file: File, cfg: any) => {
+    parseImpl = (_file: File, cfg: ParseConfig) => {
       if (first) {
         first = false;
         // trigger non-worker path
         cfg.error(new Error('worker fail'));
-        return { abort() {} } as any;
+        return { abort() {} } as { abort: () => void };
       }
       // non-worker error
       cfg.error(new Error('parse error'));
-      return { abort() {} } as any;
+      return { abort() {} } as { abort: () => void };
     };
 
     renderWithProviders(<Step2_Review />);
