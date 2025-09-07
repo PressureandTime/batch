@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { z } from 'zod';
 import { makeStep1Schema } from '../Step1_Details';
 
 function makeFile(name: string, type: string): File {
@@ -21,14 +20,22 @@ function asFileList(files: File[]): FileList {
 describe('Step1 schema (stored file vs DOM FileList)', () => {
   it('fails when no stored file and empty/invalid file input', () => {
     const schema = makeStep1Schema(false);
-    const empty = { batchName: 'x', approver: 'Alice Johnson', file: undefined } as any;
+    const empty = { batchName: 'x', approver: 'Alice Johnson', file: undefined } as unknown as {
+      batchName: string;
+      approver: string;
+      file?: FileList | undefined;
+    };
     const res = schema.safeParse(empty);
     expect(res.success).toBe(false);
   });
 
   it('allows empty DOM FileList when a stored file exists', () => {
     const schema = makeStep1Schema(true);
-    const empty = { batchName: 'x', approver: 'Alice Johnson', file: undefined } as any;
+    const empty = { batchName: 'x', approver: 'Alice Johnson', file: undefined } as unknown as {
+      batchName: string;
+      approver: string;
+      file?: FileList | undefined;
+    };
     const res = schema.safeParse(empty);
     expect(res.success).toBe(true);
   });
@@ -39,17 +46,17 @@ describe('Step1 schema (stored file vs DOM FileList)', () => {
       batchName: 'x',
       approver: 'Alice Johnson',
       file: asFileList([makeFile('any.txt', 'text/csv')]),
-    } as any;
+    } as unknown as { batchName: string; approver: string; file: FileList };
     const csvByName = {
       batchName: 'x',
       approver: 'Alice Johnson',
       file: asFileList([makeFile('sample.csv', 'application/octet-stream')]),
-    } as any;
+    } as unknown as { batchName: string; approver: string; file: FileList };
     const notCsv = {
       batchName: 'x',
       approver: 'Alice Johnson',
       file: asFileList([makeFile('doc.pdf', 'application/pdf')]),
-    } as any;
+    } as unknown as { batchName: string; approver: string; file: FileList };
 
     expect(schema.safeParse(csvByType).success).toBe(true);
     expect(schema.safeParse(csvByName).success).toBe(true);

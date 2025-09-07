@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderWithProviders } from '../../../test-utils';
 import { TransactionsPage } from '../index';
-import { screen, within, cleanup } from '@testing-library/react';
+import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 /** Helper to set the URL before rendering */

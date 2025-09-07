@@ -4,10 +4,16 @@ import { useBatchTransferStore } from '../useBatchTransferStore';
 import { screen, waitFor } from '@testing-library/react';
 import { Step2_Review } from '../Step2_Review';
 
-let parseImpl: ((file: File, cfg: any) => any) | null = null;
+type ParseConfig = {
+  step?: (result: { data: Record<string, unknown> }) => void;
+  complete?: () => void;
+  error: (error: unknown) => void;
+};
+
+let parseImpl: ((file: File, cfg: ParseConfig) => { abort?: () => void } | void) | null = null;
 vi.mock('papaparse', () => ({
   default: {
-    parse: (file: File, cfg: any) => parseImpl?.(file, cfg),
+    parse: (file: File, cfg: ParseConfig) => parseImpl?.(file, cfg),
   },
 }));
 
@@ -33,14 +39,14 @@ describe('Step2_Review - worker watchdog fallback and progressive updates', () =
 
     // Mocked papaparse
     let first = true;
-    parseImpl = (_file: File, cfg: any) => {
+    parseImpl = (_file: File, cfg: ParseConfig) => {
       if (first) {
         first = false;
         cfg.error(new Error('worker failed'));
         return { abort: vi.fn() } as ParserLike;
       }
       // Non-worker path
-      cfg.step({
+      cfg.step?.({
         data: {
           'Transaction Date': '2025-01-01',
           'Account Number': '000-123456789-01',
@@ -48,7 +54,7 @@ describe('Step2_Review - worker watchdog fallback and progressive updates', () =
           Amount: '1.00',
         },
       });
-      cfg.step({
+      cfg.step?.({
         data: {
           'Transaction Date': '2025-01-02',
           'Account Number': '000-123456789-01',
@@ -56,7 +62,7 @@ describe('Step2_Review - worker watchdog fallback and progressive updates', () =
           Amount: '2.00',
         },
       });
-      cfg.complete();
+      cfg.complete?.();
       return { abort: vi.fn() } as ParserLike;
     };
 
