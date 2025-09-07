@@ -46,7 +46,7 @@ export const Step3_Summary = () => {
   };
 
   return (
-    <Box>
+    <Box data-testid="summary-section">
       <Text fontSize="lg" fontWeight="semibold" mb={6}>
         Batch Transfer - Step 3 of 3
       </Text>

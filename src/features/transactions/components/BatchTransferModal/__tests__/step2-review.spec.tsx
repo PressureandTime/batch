@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Step2_Review } from '../Step2_Review';
 import { useBatchTransferStore } from '../useBatchTransferStore';
 import { renderWithProviders } from '../../../../../test-utils';
+import type { ParsedRecord } from '../../../types';
 
 // Helper to set store state
-const setParsed = (rows: any[]) => {
-  const { setParsedRecords } = useBatchTransferStore.getState() as any;
+const setParsed = (rows: ParsedRecord[]) => {
+  const { setParsedRecords } = useBatchTransferStore.getState();
   setParsedRecords(rows);
 };
 

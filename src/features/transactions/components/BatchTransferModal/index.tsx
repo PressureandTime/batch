@@ -4,7 +4,7 @@
  * - Controls step navigation and submission via Zustand store
  * - Does not validate Step 1 directly; it triggers Step1_Details form submit
  */
-import { Dialog, Button, Stack, Box } from '@chakra-ui/react';
+import { Dialog, Button, Stack, Box, Portal } from '@chakra-ui/react';
 import { useRef } from 'react';
 import type { Transaction } from '../../types';
 import { useBatchTransferStore } from './useBatchTransferStore';
@@ -103,68 +103,87 @@ export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransf
     <Dialog.Root
       open={open}
       onOpenChange={(details) => (details.open ? null : handleClose())}
-      size="xl"
       closeOnInteractOutside={false}
     >
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
-        <Dialog.Content maxW="900px" mx={4} data-testid="batch-transfer-dialog">
-          <Dialog.Header>
-            <Dialog.Title data-testid="step-title">{getStepTitle()}</Dialog.Title>
-            <Dialog.CloseTrigger />
-          </Dialog.Header>
+      <Portal>
+        <Dialog.Backdrop position="fixed" inset={0} />
+        <Dialog.Positioner
+          position="fixed"
+          inset={0}
+          w="100vw"
+          h="100vh"
+          display="grid"
+          placeItems="center"
+        >
+          <Dialog.Content
+            w="full"
+            maxW={{
+              base: 'calc(100vw - 2rem)', // phones: unchanged
+              md: 'min(96vw, 960px)', // tablets: near-full width with safe cap
+              lg: 'min(92vw, 1200px)', // laptops/desktops
+              xl: 'min(88vw, 1440px)', // larger desktops
+              '2xl': 'min(80vw, 1600px)', // very large screens
+            }}
+            mx="auto"
+            data-testid="batch-transfer-dialog"
+          >
+            <Dialog.Header>
+              <Dialog.Title data-testid="step-title">{getStepTitle()}</Dialog.Title>
+              <Dialog.CloseTrigger />
+            </Dialog.Header>
 
-          <Dialog.Body py={6} minH="400px">
-            {renderCurrentStep()}
-          </Dialog.Body>
+            <Dialog.Body py={6} minH="400px">
+              {renderCurrentStep()}
+            </Dialog.Body>
 
-          <Dialog.Footer>
-            <Stack direction="row" gap={3} justify="space-between" w="full">
-              <Box>
-                {currentStep > 1 && (
-                  <Button variant="outline" onClick={prevStep} data-testid="previous-btn">
-                    Previous
-                  </Button>
-                )}
-              </Box>
+            <Dialog.Footer>
+              <Stack direction="row" gap={3} justify="space-between" w="full">
+                <Box>
+                  {currentStep > 1 && (
+                    <Button variant="outline" onClick={prevStep} data-testid="previous-btn">
+                      Previous
+                    </Button>
+                  )}
+                </Box>
 
-              <Stack direction="row" gap={3}>
-                <Button
-                  variant="outline"
-                  onClick={handleClose}
-                  borderColor="gray.300"
-                  color="gray.700"
-                  _hover={{ bg: 'gray.50' }}
-                  _focus={{ boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.6)' }}
-                >
-                  Cancel
-                </Button>
-
-                {currentStep < 3 ? (
+                <Stack direction="row" gap={3}>
                   <Button
-                    colorPalette="blue"
-                    onClick={handleNext}
-                    disabled={!canProceed()}
-                    data-testid="next-btn"
+                    variant="outline"
+                    onClick={handleClose}
+                    borderColor="gray.300"
+                    color="gray.700"
+                    _hover={{ bg: 'gray.50' }}
+                    _focus={{ boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.6)' }}
                   >
-                    Next
+                    Cancel
                   </Button>
-                ) : (
-                  <Button
-                    colorPalette="green"
-                    onClick={handleSubmit}
-                    disabled={!canProceed()}
-                    data-testid="submit-batch-btn"
-                    aria-label="Submit Batch"
-                  >
-                    Submit Batch
-                  </Button>
-                )}
+
+                  {currentStep < 3 ? (
+                    <Button
+                      colorPalette="blue"
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                      data-testid="next-btn"
+                    >
+                      Next
+                    </Button>
+                  ) : (
+                    <Button
+                      colorPalette="green"
+                      onClick={handleSubmit}
+                      disabled={!canProceed()}
+                      data-testid="submit-batch-btn"
+                      aria-label="Submit Batch"
+                    >
+                      Submit Batch
+                    </Button>
+                  )}
+                </Stack>
               </Stack>
-            </Stack>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Positioner>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
     </Dialog.Root>
   );
 };

@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Papa from 'papaparse';
-import { Box, Text, Table, Spinner, Center, Stack, Tooltip } from '@chakra-ui/react';
+import { Box, Text, Table, Spinner, Center, Stack } from '@chakra-ui/react';
+import { StatusIndicator } from './StatusIndicator';
+import { RowView } from './RowView';
+import type { ParseStepResult } from 'papaparse';
+
+type CsvRow = Record<string, unknown>;
+
 import { useBatchTransferStore } from './useBatchTransferStore';
 import type { ParsedRecord } from '../../types';
 import { transactionSchema } from './validation';
+import { normalizeRowKeys } from './csv-normalize';
 
 export const Step2_Review = () => {
   const { file, setParsedRecords, parsedRecords } = useBatchTransferStore();
@@ -25,13 +32,6 @@ export const Step2_Review = () => {
     [parsedRecords.length, validCount]
   );
 
-  /** Compute error tooltip text for an invalid record without changing DOM structure */
-  const getErrorText = (errors: ParsedRecord['errors']): string =>
-    Object.entries(errors)
-      .filter(([, messages]) => messages && messages.length > 0)
-      .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
-      .join('; ');
-
   // Enable virtualization for medium+ datasets
   const useVirtual = rows.length > 300;
   // Always call useVirtualizer to respect Rules of Hooks; choose whether to use it based on useVirtual
@@ -46,7 +46,7 @@ export const Step2_Review = () => {
 
     let isActive = true;
     let watchdogId: number | null = null;
-    let currentParser: any = null;
+    let currentParser: { abort?: () => void } | null = null;
 
     setIsLoading(true);
 
@@ -57,14 +57,26 @@ export const Step2_Review = () => {
         const FIRST_BATCH_SIZE = 1;
         const SUBSEQUENT_BATCH_SIZE = 1000;
 
-        currentParser = Papa.parse(file, {
+        const config: {
+          header: boolean;
+          skipEmptyLines: boolean;
+          worker: boolean;
+          step: (result: ParseStepResult<CsvRow>) => void;
+          complete: () => void;
+          error: (error: unknown) => void;
+        } = {
           header: true,
           skipEmptyLines: true,
           worker: useWorker,
-          step: (result) => {
+          step: (result: ParseStepResult<CsvRow>) => {
             if (!isActive) return;
             progressed += 1;
-            const validation = transactionSchema.safeParse(result.data);
+
+            // Normalize keys before validation to tolerate case/space variations of canonical headers
+            const normalized = normalizeRowKeys(result.data as CsvRow);
+
+            const validation = transactionSchema.safeParse(normalized);
+
             if (validation.success) {
               results.push({
                 data: validation.data as Record<string, unknown>,
@@ -73,7 +85,7 @@ export const Step2_Review = () => {
               });
             } else {
               results.push({
-                data: result.data as Record<string, unknown>,
+                data: normalized as Record<string, unknown>,
                 isValid: false,
                 errors: validation.error.flatten().fieldErrors,
               });
@@ -96,9 +108,9 @@ export const Step2_Review = () => {
             setParsedRecords([...results]);
             setIsLoading(false);
           },
-          error: (error) => {
+          error: (error: unknown) => {
             if (!isActive) return;
-            console.error('CSV parsing error:', error);
+
             if (watchdogId) window.clearTimeout(watchdogId);
             if (useWorker) {
               // Fallback: retry without worker (some environments disallow workers in tests)
@@ -107,7 +119,13 @@ export const Step2_Review = () => {
               setIsLoading(false);
             }
           },
-        });
+        };
+
+        // The config discriminated union is tricky with worker on/off; cast narrowly here.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        currentParser = Papa.parse(file as File, config as any) as unknown as {
+          abort?: () => void;
+        };
 
         // Watchdog: if worker parse makes no progress quickly, abort and retry without worker
         if (useWorker) {
@@ -116,15 +134,12 @@ export const Step2_Review = () => {
             if (progressed === 0) {
               try {
                 currentParser?.abort?.();
-              } catch (e) {
-                // ignore
-              }
+              } catch {}
               run(false);
             }
           }, 5000);
         }
-      } catch (e) {
-        console.error('CSV parsing threw:', e);
+      } catch {
         if (useWorker) run(false);
         else setIsLoading(false);
       }
@@ -137,9 +152,7 @@ export const Step2_Review = () => {
       if (watchdogId) window.clearTimeout(watchdogId);
       try {
         currentParser?.abort?.();
-      } catch (e) {
-        // ignore
-      }
+      } catch {}
     };
   }, [file, setParsedRecords]);
 
@@ -195,20 +208,24 @@ export const Step2_Review = () => {
       <Box
         borderWidth="1px"
         borderRadius="lg"
-        maxH="350px"
+        maxH={{ base: '350px', md: '420px', lg: '520px' }}
         minH="150px"
         overflowY="auto"
+        overflowX="auto"
+        pr={{ base: 4, md: 6 }}
         data-testid="review-table"
         ref={parentRef}
       >
         <Table.Root variant="outline" size="sm">
           <Table.Header position="sticky" top={0} bg="white" zIndex={1}>
             <Table.Row>
-              <Table.ColumnHeader w="12">Status</Table.ColumnHeader>
-              <Table.ColumnHeader>Transaction Date</Table.ColumnHeader>
-              <Table.ColumnHeader>Account Number</Table.ColumnHeader>
-              <Table.ColumnHeader>Account Holder Name</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="end">Amount</Table.ColumnHeader>
+              <Table.ColumnHeader w="80px">Status</Table.ColumnHeader>
+              <Table.ColumnHeader minW="140px">Transaction Date</Table.ColumnHeader>
+              <Table.ColumnHeader minW="220px">Account Number</Table.ColumnHeader>
+              <Table.ColumnHeader minW="220px">Account Holder Name</Table.ColumnHeader>
+              <Table.ColumnHeader minW="120px" textAlign="end" whiteSpace="nowrap">
+                Amount
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           {rows.length === 0 && (
@@ -235,65 +252,9 @@ export const Step2_Review = () => {
                         rowVirtualizer!.getVirtualItems()[0]?.start ?? 0
                       }px)`}
                     >
-                      {rowVirtualizer!.getVirtualItems().map((v) => {
-                        const record = rows[v.index];
-                        return (
-                          <Box
-                            key={v.key}
-                            data-testid="review-row"
-                            display="grid"
-                            gridTemplateColumns="80px 1fr 1fr 1fr 1fr"
-                            alignItems="center"
-                            bg={!record.isValid ? 'red.50' : 'transparent'}
-                            borderBottomWidth="1px"
-                            px={3}
-                            py={2}
-                          >
-                            <Box>
-                              {record.isValid ? (
-                                <Text color="green.500" fontSize="lg" fontWeight="bold">
-                                  ✓
-                                </Text>
-                              ) : (
-                                <Tooltip.Root>
-                                  <Tooltip.Trigger asChild>
-                                    <Text
-                                      color="red.500"
-                                      fontSize="lg"
-                                      fontWeight="bold"
-                                      cursor="pointer"
-                                      data-testid="invalid-status"
-                                    >
-                                      ⚠
-                                    </Text>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Positioner>
-                                    <Tooltip.Content
-                                      bg="red.600"
-                                      color="white"
-                                      borderRadius="md"
-                                      px={3}
-                                      py={2}
-                                      fontSize="sm"
-                                      maxW="300px"
-                                      data-testid="error-tooltip"
-                                    >
-                                      <Tooltip.Arrow>
-                                        <Tooltip.ArrowTip />
-                                      </Tooltip.Arrow>
-                                      {getErrorText(record.errors)}
-                                    </Tooltip.Content>
-                                  </Tooltip.Positioner>
-                                </Tooltip.Root>
-                              )}
-                            </Box>
-                            <Box>{String(record.data['Transaction Date'] ?? '')}</Box>
-                            <Box>{String(record.data['Account Number'] ?? '')}</Box>
-                            <Box>{String(record.data['Account Holder Name'] ?? '')}</Box>
-                            <Box textAlign="end">{String(record.data['Amount'] ?? '')}</Box>
-                          </Box>
-                        );
-                      })}
+                      {rowVirtualizer!.getVirtualItems().map((v) => (
+                        <RowView key={v.key} record={rows[v.index]} />
+                      ))}
                     </Box>
                   </Box>
                 </Table.Cell>
@@ -308,47 +269,21 @@ export const Step2_Review = () => {
                   data-testid="review-row"
                 >
                   <Table.Cell>
-                    {record.isValid ? (
-                      <Text color="green.500" fontSize="lg" fontWeight="bold">
-                        ✓
-                      </Text>
-                    ) : (
-                      <Tooltip.Root>
-                        <Tooltip.Trigger asChild>
-                          <Text
-                            color="red.500"
-                            fontSize="lg"
-                            fontWeight="bold"
-                            cursor="pointer"
-                            data-testid="invalid-status"
-                          >
-                            ⚠
-                          </Text>
-                        </Tooltip.Trigger>
-                        <Tooltip.Positioner>
-                          <Tooltip.Content
-                            bg="red.600"
-                            color="white"
-                            borderRadius="md"
-                            px={3}
-                            py={2}
-                            fontSize="sm"
-                            maxW="300px"
-                            data-testid="error-tooltip"
-                          >
-                            <Tooltip.Arrow>
-                              <Tooltip.ArrowTip />
-                            </Tooltip.Arrow>
-                            {getErrorText(record.errors)}
-                          </Tooltip.Content>
-                        </Tooltip.Positioner>
-                      </Tooltip.Root>
-                    )}
+                    <StatusIndicator isValid={record.isValid} errors={record.errors} />
                   </Table.Cell>
                   <Table.Cell>{String(record.data['Transaction Date'] ?? '')}</Table.Cell>
-                  <Table.Cell>{String(record.data['Account Number'] ?? '')}</Table.Cell>
+                  <Table.Cell fontFamily="mono">
+                    {String(record.data['Account Number'] ?? '')}
+                  </Table.Cell>
                   <Table.Cell>{String(record.data['Account Holder Name'] ?? '')}</Table.Cell>
-                  <Table.Cell textAlign="end">{String(record.data['Amount'] ?? '')}</Table.Cell>
+                  <Table.Cell
+                    textAlign="end"
+                    pr={{ base: 2, md: 3 }}
+                    whiteSpace="nowrap"
+                    color="gray.800"
+                  >
+                    {String(record.data['Amount'] ?? '')}
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
