@@ -37,3 +37,9 @@ requirements.md
 /sample-data/*-50000.csv
 /sample-data/*-100000.csv
 /sample-data/*-200000.csv
+
+
+# Test coverage and runner artifacts
+coverage/
+playwright-report/
+test-results/

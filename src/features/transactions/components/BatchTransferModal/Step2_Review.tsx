@@ -92,7 +92,7 @@ export const Step2_Review = () => {
               });
             }
 
-            // Show some rows quickly, then update in batches
+            // Early first row, then batch updates
             if (results.length === FIRST_BATCH_SIZE) {
               setParsedRecords([...results]);
               setIsLoading(false);
@@ -114,7 +114,7 @@ export const Step2_Review = () => {
 
             if (watchdogId) window.clearTimeout(watchdogId);
             if (useWorker) {
-              // Retry without worker if needed
+              // Fallback to non-worker
               run(false);
             } else {
               setIsLoading(false);
@@ -127,7 +127,7 @@ export const Step2_Review = () => {
           abort?: () => void;
         };
 
-        // Watchdog to fallback if worker stalls
+        // Watchdog: fallback if worker stalls
         if (useWorker) {
           watchdogId = window.setTimeout(() => {
             if (!isActive) return;
@@ -159,8 +159,6 @@ export const Step2_Review = () => {
       }
     };
   }, [file, setParsedRecords]);
-
-  // counts are memoized above
 
   return (
     <Box>
