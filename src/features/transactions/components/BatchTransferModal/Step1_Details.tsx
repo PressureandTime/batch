@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Box, Button, Field, Input, Select, Stack, Text } from '@chakra-ui/react';
+import { Box, Button, Field, Input, Stack, Text, SimpleGrid } from '@chakra-ui/react';
 import { useBatchTransferStore } from './useBatchTransferStore';
 import {
   useRef,
@@ -199,7 +199,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
   useEffect(() => {
     const el = formRef.current;
     if (!el) return;
-    const handler = (e: Event) => {
+    const handler = () => {
       // Let RHF/our handler run via onSubmit; no-op here.
       // But we can re-check validity after submit to be safe.
       setTimeout(recomputeValidity, 0);
@@ -222,82 +222,84 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
       </Text>
 
       <form ref={formRef} onSubmit={handleSubmit(onFormSubmit)} data-testid="step1-form">
-        <Stack gap={6}>
-          <Field.Root invalid={!!errors.batchName}>
-            <Field.Label htmlFor="batchName">Batch Name</Field.Label>
-            <Input
-              id="batchName"
-              data-testid="batch-name-input"
-              {...register('batchName')}
-              placeholder="Enter batch name"
-            />
-            <Field.ErrorText>{errors.batchName?.message}</Field.ErrorText>
-          </Field.Root>
+        <Stack gap={{ base: 6, md: 8 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 6, md: 8 }}>
+            <Field.Root invalid={!!errors.batchName}>
+              <Field.Label htmlFor="batchName">Batch Name</Field.Label>
+              <Input
+                id="batchName"
+                data-testid="batch-name-input"
+                {...register('batchName')}
+                placeholder="Enter batch name"
+              />
+              <Field.ErrorText>{errors.batchName?.message}</Field.ErrorText>
+            </Field.Root>
 
-          <Field.Root invalid={!!errors.approver}>
-            <Field.Label htmlFor="approver">Approver</Field.Label>
-            <select
-              id="approver"
-              data-testid="approver-select"
-              {...register('approver')}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '16px',
-                backgroundColor: 'white',
-                color: '#1a202c',
-              }}
-            >
-              <option value="">Select an approver</option>
-              {randomizedApprovers.map((approverName) => (
-                <option key={approverName} value={approverName}>
-                  {approverName}
-                </option>
-              ))}
-            </select>
-            <Field.ErrorText>{errors.approver?.message}</Field.ErrorText>
-          </Field.Root>
+            <Field.Root invalid={!!errors.approver}>
+              <Field.Label htmlFor="approver">Approver</Field.Label>
+              <select
+                id="approver"
+                data-testid="approver-select"
+                {...register('approver')}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  backgroundColor: 'white',
+                  color: '#1a202c',
+                }}
+              >
+                <option value="">Select an approver</option>
+                {randomizedApprovers.map((approverName) => (
+                  <option key={approverName} value={approverName}>
+                    {approverName}
+                  </option>
+                ))}
+              </select>
+              <Field.ErrorText>{errors.approver?.message}</Field.ErrorText>
+            </Field.Root>
 
-          <Field.Root invalid={!!errors.file}>
-            <Field.Label htmlFor="file">CSV File</Field.Label>
-            <input
-              id="file"
-              data-testid="csv-file-input"
-              type="file"
-              accept=".csv"
-              onChange={(e) => {
-                // First pass event to RHF
-                fileReg.onChange(e);
-                const fl = (e.target as HTMLInputElement).files;
-                if (fl) {
-                  // Ensure RHF value is synchronized
-                  setValue('file', fl as unknown as FileList, { shouldValidate: true });
-                  const name = fl.length > 0 ? fl[0].name : '';
-                  setSelectedName(name);
-                }
-                // Then recompute validity (microtask)
-                setTimeout(recomputeValidity, 0);
-              }}
-              style={{ paddingTop: '4px' }}
-            />
-            {/* Visual feedback for selected file (always present for stable e2e) */}
-            <Box
-              mt={2}
-              px={3}
-              py={2}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="gray.50"
-              color="gray.700"
-              aria-live="polite"
-              data-testid="selected-file-name"
-            >
-              Selected file: {selectedName || 'No file selected'}
-            </Box>
-            <Field.ErrorText>{errors.file?.message}</Field.ErrorText>
-          </Field.Root>
+            <Field.Root invalid={!!errors.file} gridColumn={{ base: 'auto', md: '1 / -1' }}>
+              <Field.Label htmlFor="file">CSV File</Field.Label>
+              <input
+                id="file"
+                data-testid="csv-file-input"
+                type="file"
+                accept=".csv"
+                onChange={(e) => {
+                  // First pass event to RHF
+                  fileReg.onChange(e);
+                  const fl = (e.target as HTMLInputElement).files;
+                  if (fl) {
+                    // Ensure RHF value is synchronized
+                    setValue('file', fl as unknown as FileList, { shouldValidate: true });
+                    const name = fl.length > 0 ? fl[0].name : '';
+                    setSelectedName(name);
+                  }
+                  // Then recompute validity (microtask)
+                  setTimeout(recomputeValidity, 0);
+                }}
+                style={{ paddingTop: '4px' }}
+              />
+              {/* Visual feedback for selected file (always present for stable e2e) */}
+              <Box
+                mt={2}
+                px={3}
+                py={2}
+                borderWidth="1px"
+                borderRadius="md"
+                bg="gray.50"
+                color="gray.700"
+                aria-live="polite"
+                data-testid="selected-file-name"
+              >
+                Selected file: {selectedName || 'No file selected'}
+              </Box>
+              <Field.ErrorText>{errors.file?.message}</Field.ErrorText>
+            </Field.Root>
+          </SimpleGrid>
 
           {/* Hidden submit button for external triggering */}
           <Button ref={hiddenSubmitRef} type="submit" display="none" aria-hidden="true">

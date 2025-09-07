@@ -16,9 +16,18 @@ export const TransactionsTable = ({ transactions }: TransactionsTableProps) => {
   }
 
   return (
-    <Box borderWidth="1px" borderRadius="lg" data-testid="transactions-table">
-      <Table.Root variant="outline">
-        <Table.Header>
+    <Box
+      borderWidth="1px"
+      borderRadius="lg"
+      data-testid="transactions-table"
+      overflowX="auto"
+      maxW="100%"
+      role="region"
+      aria-label="Transactions table. Scroll horizontally on small screens"
+      tabIndex={0}
+    >
+      <Table.Root variant="outline" minW="900px">
+        <Table.Header position="sticky" top={0} bg="white" zIndex={1}>
           <Table.Row>
             <Table.ColumnHeader>Batch Name</Table.ColumnHeader>
             <Table.ColumnHeader>Approver</Table.ColumnHeader>
