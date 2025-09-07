@@ -82,7 +82,7 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
     nextStep,
     setStep1Validity,
   } = useBatchTransferStore();
-  const randomizedApprovers = useMemo(() => [...approvers].sort(() => Math.random() - 0.5), []);
+  const randomizedApprovers = useMemo(() => [...approvers].sort(), []);
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -204,13 +204,6 @@ export const Step1_Details = forwardRef<Step1DetailsRef, Step1DetailsProps>(({ o
       }
     };
   }, [watch]);
-
-  // Set a default approver if none selected
-  useEffect(() => {
-    if (!approver && randomizedApprovers[0]) {
-      setValue('approver', randomizedApprovers[0]);
-    }
-  }, [approver, randomizedApprovers, setValue]);
 
   const onFormSubmit = (data: Step1FormData) => {
     // File fallback: RHF → DOM → stored
