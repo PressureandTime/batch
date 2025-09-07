@@ -27,20 +27,16 @@ export const Step2ReviewControls = ({
         </Text>
         <Stack direction="row" align="center" ml="auto">
           <input
+            id="only-invalid-toggle"
+            name="onlyInvalid"
             type="checkbox"
             data-testid="only-invalid-toggle"
             checked={onlyInvalid}
             onChange={(e) => onToggleOnlyInvalid(e.target.checked)}
           />
-          <span>Show only invalid</span>
+          <label htmlFor="only-invalid-toggle">Show only invalid</label>
           {isPending ? (
-            <Text
-              as="span"
-              fontSize="sm"
-              color="gray.500"
-              ml={3}
-              data-testid="filtering-indicator"
-            >
+            <Text as="span" fontSize="sm" color="gray.500" ml={3} data-testid="filtering-indicator">
               Filtering...
             </Text>
           ) : null}
@@ -49,4 +45,3 @@ export const Step2ReviewControls = ({
     </Stack>
   );
 };
-

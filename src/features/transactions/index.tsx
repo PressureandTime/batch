@@ -164,6 +164,8 @@ export const TransactionsPage = () => {
             </Text>
             <NativeSelect.Root size="sm" width="auto" minW={{ base: '32', md: '36' }}>
               <NativeSelect.Field
+                id="items-per-page"
+                name="itemsPerPage"
                 data-testid="items-per-page"
                 value={String(itemsPerPage)}
                 onChange={(e) => {

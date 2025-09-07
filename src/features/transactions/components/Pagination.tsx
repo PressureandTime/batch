@@ -152,6 +152,8 @@ export const Pagination = ({
               ml={{ base: 0, md: 2 }}
             >
               <Input
+                id="pagination-jump-input"
+                name="paginationJump"
                 size="sm"
                 type="number"
                 min={1}
