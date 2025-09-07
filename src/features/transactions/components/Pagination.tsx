@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Box, Button, HStack, Input, Stack, Text, useBreakpointValue } from '@chakra-ui/react';
 
+/**
+ * Pagination component with responsive numeric tokens and optional jump input.
+ */
 export interface PaginationProps {
   /** Current page (1-based) */
   page: number;
@@ -42,6 +45,9 @@ function usePageTokens(page: number, totalPages: number, maxButtons = 7): (numbe
   }, [page, totalPages, maxButtons]);
 }
 
+/**
+ * Pagination control with First/Prev/Windowed Numbers/Next/Last and optional jump-to-page.
+ */
 export const Pagination = ({
   page,
   totalPages,

@@ -5,16 +5,27 @@ import { z } from 'zod';
  * - Trims whitespace
  * - Removes thousands separators (commas)
  * - Parses to number
+ *
+ * @param value - CSV field value for Amount (string or number)
+ * @returns number (NaN for unparseable values)
  */
 export const parseCsvAmount = (value: unknown): number => {
-  const str = String(value ?? '').trim().replace(/,/g, '');
+  const str = String(value ?? '')
+    .trim()
+    .replace(/,/g, '');
   const num = parseFloat(str);
   return num;
 };
 
 /**
  * Zod validation schema for CSV transaction records.
- * Keys match CSV column headers exactly.
+ * Keys match CSV column headers exactly as provided by requirements.
+ *
+ * Fields
+ * - Transaction Date: ISO YYYY-MM-DD; validated as a real calendar date
+ * - Account Number: 000-000000000-00 pattern
+ * - Account Holder Name: non-empty string
+ * - Amount: positive number, accepts comma-separated strings; coerced to number
  */
 export const transactionSchema = z.object({
   'Transaction Date': z
@@ -35,4 +46,3 @@ export const transactionSchema = z.object({
 });
 
 export type TransactionSchema = z.infer<typeof transactionSchema>;
-
