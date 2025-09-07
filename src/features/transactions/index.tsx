@@ -7,7 +7,7 @@ import type { Transaction } from './types';
 import { clampPage, getPaginated, getTotalPages } from './utils/pagination';
 import { Pagination } from './components/Pagination';
 
-// Initial mock data to populate the table and demonstrate all status types
+// Seed data to show all status types
 const initialTransactions: Transaction[] = [
   {
     id: uuidv4(),
@@ -79,7 +79,7 @@ export const TransactionsPage = () => {
   const handleBatchSubmit = (newTransactions: Transaction[]) => {
     const batchSize = newTransactions.length;
 
-    // Always land on the first page for a predictable UX.
+    // Jump to first page for a predictable UX
     setCurrentPage(1);
 
     const applyUpdate = () =>
@@ -88,7 +88,7 @@ export const TransactionsPage = () => {
         return updated;
       });
 
-    // Keep responsiveness for very large batches.
+    // Keep the UI responsive for very large batches
     if (batchSize >= 1000) {
       startTransition(applyUpdate);
     } else {
@@ -96,7 +96,7 @@ export const TransactionsPage = () => {
     }
   };
 
-  // compute total pages and clamp current page to avoid out-of-range states
+  // Compute total pages and clamp the current page to a valid range
   const totalPages = useMemo(
     () => getTotalPages(transactions.length, itemsPerPage),
     [transactions.length, itemsPerPage]
@@ -106,7 +106,7 @@ export const TransactionsPage = () => {
     [currentPage, totalPages]
   );
 
-  // ensure we never stay on an invalid page after data/page-size changes
+  // Avoid invalid pages after data or page size changes
   useEffect(() => {
     if (safeCurrentPage !== currentPage) setCurrentPage(safeCurrentPage);
   }, [safeCurrentPage, currentPage]);
@@ -115,7 +115,7 @@ export const TransactionsPage = () => {
     return getPaginated(transactions, safeCurrentPage, itemsPerPage);
   }, [transactions, safeCurrentPage, itemsPerPage]);
 
-  // reflect state in URL for deep-linking (use clamped page)
+  // Reflect state in the URL for deep links (uses clamped page)
   useEffect(() => {
     const url = new URL(window.location.href);
     url.searchParams.set('page', String(safeCurrentPage));
@@ -123,7 +123,7 @@ export const TransactionsPage = () => {
     window.history.replaceState(null, '', url);
   }, [safeCurrentPage, itemsPerPage]);
 
-  // totalPages computed above via useMemo
+  // totalPages computed via useMemo above
 
   // persist pagination state
   useEffect(() => {

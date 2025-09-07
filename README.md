@@ -1,56 +1,79 @@
 # Batch Transaction Processor
 
-A React + TypeScript + Vite app for uploading a CSV of bank transactions, validating the data, and reviewing a 3‑step batch transfer flow.
+A small React + TypeScript + Vite app that processes batch transfers from a CSV. Upload a file, review the records, and confirm the batch in a simple three step flow.
 
-## Tech Stack
+## What’s included
 
-- React 19, TypeScript (strict), Vite
-- Chakra UI for accessible UI primitives
-- Zustand for local state
+- Batch Transfer modal with three steps (details, review, summary)
+- CSV parsing and validation
+- Transactions table on the home page with status labels and tooltips
+- Sample CSV files for quick testing
+
+## Tech stack
+
+- React 19, TypeScript, Vite
+- Chakra UI
+- Zustand for client state
 - Zod for validation
 - Vitest + Testing Library for unit tests
-- Playwright for end‑to‑end tests
+- Playwright for end to end tests
 
-## Development
+## Key libraries
 
-- Install deps: `npm install`
-- Start dev server: `npm run dev`
-- Type check + build: `npm run build`
-- Unit tests: `npm run test`
-- E2E tests: `npm run test:e2e`
+- Papa Parse: CSV parsing and streaming
+- React Hook Form: forms and validation wiring
+- @tanstack/react-virtual: virtualization for large review tables
+- uuid: unique IDs for transactions
 
-## Project Structure (high‑level)
+## Getting started
 
-- `src/features/transactions/components/BatchTransferModal`
-  - Step1_Details: step 1 form (batch name, approver, CSV upload)
-    - Step1ApproverField: Approver select subcomponent
-    - Step1SelectedFileName: Selected file display
-  - Step2_Review: CSV parsing + validation + review table
-    - Step2ReviewControls: Counts + filter toggle
-    - Step2ReviewTable: Virtualized/regular table rendering
-  - Step3_Summary: summary stats and confirmation
-- `src/features/transactions/components/TransactionsTable`: list of processed transactions
+Prerequisites: Node and npm.
 
-## CSV Expectations
+- Install dependencies: `npm install`
+- Start the dev server: `npm run dev` (http://localhost:5173)
+- Type check and build: `npm run build`
+- Run unit tests: `npm run test`
+- Run e2e tests: `npm run test:e2e` (Playwright starts the dev server automatically)
 
-Headers (case/spacing tolerant via normalization):
+## Usage
+
+1. Start the app and open the home page
+2. Click “Batch Transfer”
+3. Step 1: enter a batch name, upload a CSV, select an approver (sample files live in `sample-data/`)
+4. Step 2: review parsed rows and fix any validation errors
+5. Step 3: review totals and confirm
+
+After confirmation, new transactions appear in the home table. You can navigate back and forth between steps without losing data.
+
+## CSV format
+
+Headers:
 
 - Transaction Date (YYYY-MM-DD)
-- Account Number (format: 000-000000000-00)
+- Account Number (000-000000000-00)
 - Account Holder Name
 - Amount
 
-Invalid rows display field‑level errors in the review step.
+Example:
 
-## Testing Notes
+```
+Transaction Date,Account Number,Account Holder Name,Amount
+2025-02-20,000-123456789-01,John Doe,100.00
+```
 
-- Unit tests (Vitest) cover parsing/validation and UI behavior
-- Playwright suite exercises full flow including 10k‑row CSVs
+## Validation rules
 
-## Accessibility & Responsiveness
+- Transaction Date must be a valid date in YYYY-MM-DD
+- Account Number must match 000-000000000-00
+- Account Holder Name must not be empty
+- Amount must be a positive decimal
 
-- Uses Chakra UI semantics and roles
-- Tables are horizontally scrollable on small screens
+See requirements.md for the full spec and extra examples.
+
+## Notes
+
+- Playwright uses http://localhost:5173 by default (see playwright.config.ts)
+- Large CSVs from `sample-data/` are available for stress testing
 
 ## License
 

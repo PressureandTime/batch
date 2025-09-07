@@ -15,7 +15,7 @@ interface ParserLike {
   abort?: () => void;
 }
 
-describe('Step2_Review — worker watchdog fallback and progressive updates', () => {
+describe('Step2_Review - worker watchdog fallback and progressive updates', () => {
   const store = useBatchTransferStore;
 
   beforeEach(() => {

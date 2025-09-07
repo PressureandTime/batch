@@ -17,7 +17,7 @@ import {
 
 const approvers = ['Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown', 'Emma Davis'];
 
-// FileList guard (browser/JSDOM)
+// FileList guard for browser and JSDOM
 const isFileList = (val: unknown): val is FileList => {
   try {
     if (typeof FileList !== 'undefined' && val instanceof FileList) return true;

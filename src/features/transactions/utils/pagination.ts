@@ -1,6 +1,4 @@
-/**
- * Simple pagination helpers used by the Transactions page and unit tests.
- */
+/** Pagination helpers used by the Transactions page and unit tests */
 
 /**
  * Compute total page count given total items and page size.

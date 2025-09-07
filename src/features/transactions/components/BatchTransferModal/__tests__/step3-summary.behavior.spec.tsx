@@ -7,7 +7,7 @@ import { screen } from '@testing-library/react';
 type Row = { isValid: boolean; errors: Record<string, string[]>; data: Record<string, unknown> };
 const setParsed = (rows: Row[]) => useBatchTransferStore.getState().setParsedRecords(rows);
 
-describe('Step3_Summary — statistics and zero-state', () => {
+describe('Step3_Summary - statistics and zero-state', () => {
   beforeEach(() => {
     useBatchTransferStore.getState().reset();
   });

@@ -10,7 +10,7 @@ const setUrl = (query: string) => {
   window.history.replaceState(null, '', path);
 };
 
-describe('TransactionsPage — URL/LocalStorage pagination sync', () => {
+describe('TransactionsPage - URL/LocalStorage pagination sync', () => {
   beforeEach(() => {
     localStorage.clear();
     setUrl('');

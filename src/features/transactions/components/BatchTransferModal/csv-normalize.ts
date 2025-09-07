@@ -1,26 +1,17 @@
 /**
- * CSV header normalization utilities.
- *
+ * CSV header normalization helpers.
  * Rules:
- * - Trim leading/trailing whitespace
- * - Collapse internal whitespace sequences to a single space
- * - Case-insensitive exact match to canonical headers only
- * - Canonical headers:
- *   - Transaction Date
- *   - Account Number
- *   - Account Holder Name
- *   - Amount
- * - Non-canonical synonyms (e.g., "Txn Date") are NOT normalized
+ * - Trim whitespace
+ * - Collapse repeated spaces to one
+ * - Match canonical headers case-insensitively
+ * - Canonical headers: Transaction Date, Account Number, Account Holder Name, Amount
+ * - Synonyms (for example, "Txn Date") are not normalized
  */
 
 export type CsvRow = Record<string, unknown>;
 
 /** Normalize a header for matching (trim, collapse spaces, lowercase). */
-const normalizeForMatch = (key: string): string =>
-  key
-    .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+const normalizeForMatch = (key: string): string => key.trim().replace(/\s+/g, ' ').toLowerCase();
 
 const headerMap = new Map<string, string>([
   [normalizeForMatch('Transaction Date'), 'Transaction Date'],
@@ -43,4 +34,3 @@ export const normalizeRowKeys = (row: CsvRow): CsvRow => {
   }
   return out;
 };
-
