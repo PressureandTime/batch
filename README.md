@@ -68,6 +68,34 @@ Transaction Date,Account Number,Account Holder Name,Amount
 - Account Holder Name must not be empty
 - Amount must be a positive decimal
 
+## Header validation mode
+
+By default, the app enforces strict header compliance exactly as defined in requirements.md:
+
+- Transaction Date
+- Account Number
+- Account Holder Name
+- Amount
+
+Matching is case-insensitive and trims/collapses whitespace. Synonyms are NOT accepted by default.
+
+If you need to accept a few common header variations, you can enable a permissive mode in code:
+
+- Location: src/config/csv-validation.ts
+- Flag: STRICT_HEADER_MODE (boolean)
+
+Modes:
+
+- STRICT (default, recommended for audits): Only canonical headers accepted
+- PERMISSIVE (opt-in): Also accept and normalize these synonyms:
+  - "Txn Date" → "Transaction Date"
+  - "Acct Number" → "Account Number"
+  - "Name" → "Account Holder Name"
+
+Note: End-to-end tests validate the default STRICT behavior.
+
+Where to switch header mode: src/config/csv-validation.ts (set STRICT_HEADER_MODE).
+
 See requirements.md for the full spec and extra examples.
 
 ## Notes

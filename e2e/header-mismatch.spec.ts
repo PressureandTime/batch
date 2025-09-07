@@ -4,6 +4,7 @@ import path from 'path';
 const sample = (name: string) => path.resolve(process.cwd(), 'sample-data', name);
 
 test.describe('Header mismatch handling', () => {
+  // Default strict mode: ensures synonyms are NOT accepted
   test('zero or near-zero valid when headers are wrong and submit disabled', async ({ page }) => {
     await page.goto('/');
 
@@ -17,6 +18,7 @@ test.describe('Header mismatch handling', () => {
     await page.getByTestId('next-btn').click();
 
     await expect(page.getByTestId('review-table')).toBeVisible({ timeout: 30000 });
+    // Strict mode: synonyms are NOT accepted; expect zero valid records
     await expect(page.getByTestId('valid-count')).toContainText('0');
 
     await page.getByTestId('next-btn').click();
@@ -24,4 +26,3 @@ test.describe('Header mismatch handling', () => {
     await expect(page.getByTestId('submit-batch-btn')).toBeDisabled();
   });
 });
-
