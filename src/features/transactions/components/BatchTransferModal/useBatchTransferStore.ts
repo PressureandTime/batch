@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { ParsedRecord } from '../../types';
 
+/**
+ * Shape of the Batch Transfer modal state.
+ */
 export interface BatchTransferState {
   // Current step in the modal (1, 2, or 3)
   currentStep: number;

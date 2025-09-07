@@ -1,5 +1,11 @@
-import { Dialog, Button, Stack, Text, Box } from '@chakra-ui/react';
-import { useRef, useState, useEffect } from 'react';
+/**
+ * BatchTransferModal
+ * - Wraps a 3-step batch transfer workflow in a Chakra Dialog
+ * - Controls step navigation and submission via Zustand store
+ * - Does not validate Step 1 directly; it triggers Step1_Details form submit
+ */
+import { Dialog, Button, Stack, Box } from '@chakra-ui/react';
+import { useRef } from 'react';
 import type { Transaction } from '../../types';
 import { useBatchTransferStore } from './useBatchTransferStore';
 import { Step1_Details, type Step1DetailsRef } from './Step1_Details';
@@ -13,40 +19,8 @@ interface BatchTransferModalProps {
 }
 
 export const BatchTransferModal = ({ open, onOpenChange, onSubmit }: BatchTransferModalProps) => {
-  const {
-    currentStep,
-    prevStep,
-    nextStep,
-    reset,
-    parsedRecords,
-    batchName,
-    approver,
-    step1IsValid,
-    setStep1Data,
-  } = useBatchTransferStore();
-  const [domStep1Valid, setDomStep1Valid] = useState(false);
-
-  useEffect(() => {
-    if (currentStep !== 1) return;
-    const check = () => {
-      const bn = (document.getElementById('batchName') as HTMLInputElement | null)?.value?.trim();
-      const ap = (document.getElementById('approver') as HTMLSelectElement | null)?.value?.trim();
-      const fiLen =
-        (document.getElementById('file') as HTMLInputElement | null)?.files?.length ?? 0;
-      setDomStep1Valid(!!bn && !!ap && fiLen > 0);
-    };
-    check();
-    const i = window.setInterval(check, 100);
-    return () => window.clearInterval(i);
-    // Guard: if user clicks Next on Step 1 but form is invalid, show inline errors via RHF
-    useEffect(() => {
-      if (currentStep !== 1) return;
-      const bn = document.getElementById('batchName') as HTMLInputElement | null;
-      const ap = document.getElementById('approver') as HTMLSelectElement | null;
-      const fi = document.getElementById('file') as HTMLInputElement | null;
-      // If any are missing, do nothing; Step1 handles errors on submit
-    }, [currentStep]);
-  }, [currentStep]);
+  const { currentStep, prevStep, nextStep, reset, parsedRecords, batchName, approver } =
+    useBatchTransferStore();
 
   const step1Ref = useRef<Step1DetailsRef>(null);
 

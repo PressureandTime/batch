@@ -42,6 +42,13 @@ const initialTransactions: Transaction[] = [
   },
 ];
 
+/** Items-per-page options for the results select */
+const ITEMS_PER_PAGE_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 10, label: '10 / page' },
+  { value: 25, label: '25 / page' },
+  { value: 50, label: '50 / page' },
+] as const;
+
 export const TransactionsPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -163,9 +170,11 @@ export const TransactionsPage = () => {
                 }}
                 style={{ whiteSpace: 'nowrap' }}
               >
-                <option value="10">10 / page</option>
-                <option value="25">25 / page</option>
-                <option value="50">50 / page</option>
+                {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={String(opt.value)}>
+                    {opt.label}
+                  </option>
+                ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>

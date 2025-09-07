@@ -25,6 +25,13 @@ export const Step2_Review = () => {
     [parsedRecords.length, validCount]
   );
 
+  /** Compute error tooltip text for an invalid record without changing DOM structure */
+  const getErrorText = (errors: ParsedRecord['errors']): string =>
+    Object.entries(errors)
+      .filter(([, messages]) => messages && messages.length > 0)
+      .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
+      .join('; ');
+
   // Enable virtualization for medium+ datasets
   const useVirtual = rows.length > 300;
   // Always call useVirtualizer to respect Rules of Hooks; choose whether to use it based on useVirtual
@@ -274,12 +281,7 @@ export const Step2_Review = () => {
                                       <Tooltip.Arrow>
                                         <Tooltip.ArrowTip />
                                       </Tooltip.Arrow>
-                                      {Object.entries(record.errors)
-                                        .filter(([, messages]) => messages && messages.length > 0)
-                                        .map(
-                                          ([field, messages]) => `${field}: ${messages?.join(', ')}`
-                                        )
-                                        .join('; ')}
+                                      {getErrorText(record.errors)}
                                     </Tooltip.Content>
                                   </Tooltip.Positioner>
                                 </Tooltip.Root>
@@ -337,10 +339,7 @@ export const Step2_Review = () => {
                             <Tooltip.Arrow>
                               <Tooltip.ArrowTip />
                             </Tooltip.Arrow>
-                            {Object.entries(record.errors)
-                              .filter(([, messages]) => messages && messages.length > 0)
-                              .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
-                              .join('; ')}
+                            {getErrorText(record.errors)}
                           </Tooltip.Content>
                         </Tooltip.Positioner>
                       </Tooltip.Root>
