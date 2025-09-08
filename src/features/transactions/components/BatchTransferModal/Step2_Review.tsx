@@ -202,7 +202,10 @@ export const Step2_Review = () => {
         isPending={isPending}
       />
 
-      <Step2ReviewTable rows={rows} />
+      <Step2ReviewTable
+        rows={rows}
+        emptyMessage={onlyInvalid ? 'No invalid records found' : undefined}
+      />
     </Box>
   );
 };

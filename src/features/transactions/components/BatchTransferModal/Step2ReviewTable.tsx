@@ -7,9 +7,10 @@ import { StatusIndicator } from './StatusIndicator';
 
 export interface Step2ReviewTableProps {
   rows: ParsedRecord[];
+  emptyMessage?: string;
 }
 
-export const Step2ReviewTable = ({ rows }: Step2ReviewTableProps) => {
+export const Step2ReviewTable = ({ rows, emptyMessage }: Step2ReviewTableProps) => {
   const parentRef = useRef<HTMLDivElement | null>(null);
 
   const useVirtual = rows.length > 300;
@@ -36,6 +37,27 @@ export const Step2ReviewTable = ({ rows }: Step2ReviewTableProps) => {
     []
   );
 
+  if (rows.length === 0) {
+    return (
+      <Box
+        borderWidth="1px"
+        borderRadius="lg"
+        maxH={{ base: '350px', md: '420px', lg: '520px' }}
+        minH="120px"
+        overflow="hidden"
+        pr={{ base: 4, md: 6 }}
+        data-testid="review-table-empty"
+        ref={parentRef}
+      >
+        <Box py={6} textAlign="center">
+          <Text color="gray.600" data-testid="review-table-empty-message">
+            {emptyMessage ?? 'No records to display'}
+          </Text>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box
       borderWidth="1px"
@@ -50,16 +72,6 @@ export const Step2ReviewTable = ({ rows }: Step2ReviewTableProps) => {
     >
       <Table.Root variant="outline" size="sm">
         {header}
-
-        {rows.length === 0 && (
-          <Table.Body>
-            <Table.Row>
-              <Table.Cell colSpan={5}>
-                <Text color="gray.500">Loading rows...</Text>
-              </Table.Cell>
-            </Table.Row>
-          </Table.Body>
-        )}
 
         {useVirtual ? (
           <Table.Body>
@@ -93,9 +105,16 @@ export const Step2ReviewTable = ({ rows }: Step2ReviewTableProps) => {
                   <StatusIndicator isValid={record.isValid} errors={record.errors} />
                 </Table.Cell>
                 <Table.Cell>{String(record.data['Transaction Date'] ?? '')}</Table.Cell>
-                <Table.Cell fontFamily="mono">{String(record.data['Account Number'] ?? '')}</Table.Cell>
+                <Table.Cell fontFamily="mono">
+                  {String(record.data['Account Number'] ?? '')}
+                </Table.Cell>
                 <Table.Cell>{String(record.data['Account Holder Name'] ?? '')}</Table.Cell>
-                <Table.Cell textAlign="end" pr={{ base: 2, md: 3 }} whiteSpace="nowrap" color="gray.800">
+                <Table.Cell
+                  textAlign="end"
+                  pr={{ base: 2, md: 3 }}
+                  whiteSpace="nowrap"
+                  color="gray.800"
+                >
                   {String(record.data['Amount'] ?? '')}
                 </Table.Cell>
               </Table.Row>
@@ -106,4 +125,3 @@ export const Step2ReviewTable = ({ rows }: Step2ReviewTableProps) => {
     </Box>
   );
 };
-
