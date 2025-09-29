@@ -43,3 +43,10 @@ requirements.md
 coverage/
 playwright-report/
 test-results/
+
+
+# E2E temporary setup dirs
+.tmp-e2e-setup*/
+
+
+.lastRun.json
