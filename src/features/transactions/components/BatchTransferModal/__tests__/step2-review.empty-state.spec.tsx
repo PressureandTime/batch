@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../../../../../test-utils';
 import { Step2_Review } from '../Step2_Review';
 import { useBatchTransferStore } from '../useBatchTransferStore';
@@ -32,7 +32,7 @@ describe('Step2_Review empty/filtered state', () => {
 
     // Toggle only-invalid
     const toggle = await screen.findByTestId('only-invalid-toggle');
-    toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fireEvent.click(toggle);
 
     // Message should appear and no rows
     expect(await screen.findByTestId('review-table-empty-message')).toHaveTextContent(
@@ -41,4 +41,3 @@ describe('Step2_Review empty/filtered state', () => {
     expect(screen.queryByTestId('review-row')).toBeNull();
   });
 });
-
