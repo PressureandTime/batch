@@ -1,39 +1,50 @@
 # Batch Transaction Processor
 
-A small React + TypeScript + Vite app that processes batch transfers from a CSV. Upload a file, review the records, and confirm the batch in a simple three step flow.
+A React and TypeScript app for uploading, validating, reviewing and confirming batch transfers from CSV files. It shows invalid rows before confirmation and uses virtualization to keep large files responsive.
 
-## What’s included
+[View the portfolio case study](https://www.petar.rocks/work/batch/)
 
-- Batch Transfer modal with three steps (details, review, summary)
-- CSV parsing and validation
-- Transactions table on the home page with status labels and tooltips
-- Sample CSV files for quick testing
+## What it does
 
-## Tech stack
+- Three-step flow for batch details, record review and confirmation
+- Strict CSV schema validation with Zod and an optional permissive header mode
+- State-preserving back and forward navigation
+- Virtualized record review for large files
+- Synthetic test data covering files with up to 10,000 rows
+- Unit and component tests with Vitest and Testing Library
+- End-to-end coverage with Playwright
 
-- React 19, TypeScript, Vite
-- Chakra UI
+## Technology
+
+- React 19, TypeScript and Vite
+- Chakra UI for the component system
 - Zustand for client state
-- Zod for validation
-- Vitest + Testing Library for unit tests
-- Playwright for end to end tests
-
-## Key libraries
-
-- Papa Parse: CSV parsing and streaming
-- React Hook Form: forms and validation wiring
-- @tanstack/react-virtual: virtualization for large review tables
-- uuid: unique IDs for transactions
+- React Hook Form and Zod for form and schema validation
+- Papa Parse for CSV processing
+- TanStack Virtual for large review sets
+- Vitest, Testing Library and Playwright for automated tests
 
 ## Getting started
 
-Prerequisites: Node and npm.
+Prerequisites: Node.js and npm.
 
-- Install dependencies: `npm install`
-- Start the dev server: `npm run dev` (http://localhost:5173)
-- Type check and build: `npm run build`
-- Run unit tests: `npm run test`
-- Run e2e tests: `npm run test:e2e` (Playwright starts the dev server automatically)
+```bash
+npm ci
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+### Quality checks
+
+```bash
+npm run lint
+npm run build
+npm run test -- --run
+npm run test:e2e
+```
+
+Playwright starts the development server automatically for the end-to-end suite.
 
 Playwright browsers:
 
@@ -42,22 +53,22 @@ Playwright browsers:
 
 ## Usage
 
-1. Start the app and open the home page
-2. Click “Batch Transfer”
-3. Step 1: enter a batch name, upload a CSV, select an approver (sample files live in `sample-data/`)
-4. Step 2: review parsed rows and fix any validation errors
-5. Step 3: review totals and confirm
+1. Start the app and open the home page.
+2. Select **Batch Transfer**.
+3. Enter a batch name, upload a CSV and select an approver. Sample files are available in [`sample-data/`](sample-data/).
+4. Review the parsed rows and resolve validation errors.
+5. Review the totals and confirm the batch.
 
 After confirmation, new transactions appear in the home table. You can navigate back and forth between steps without losing data.
 
-## CSV format
+## CSV contract
 
-Headers:
-
-- Transaction Date (YYYY-MM-DD)
-- Account Number (000-000000000-00)
-- Account Holder Name
-- Amount
+| Header | Requirement |
+| --- | --- |
+| `Transaction Date` | Valid date in `YYYY-MM-DD` format |
+| `Account Number` | Matches `000-000000000-00` |
+| `Account Holder Name` | Non-empty value |
+| `Amount` | Positive decimal |
 
 Example:
 
@@ -66,48 +77,24 @@ Transaction Date,Account Number,Account Holder Name,Amount
 2025-02-20,000-123456789-01,John Doe,100.00
 ```
 
-## Validation rules
-
-- Transaction Date must be a valid date in YYYY-MM-DD
-- Account Number must match 000-000000000-00
-- Account Holder Name must not be empty
-- Amount must be a positive decimal
-
 ## Header validation mode
 
-By default, the app enforces strict header compliance exactly as defined in requirements.md:
+By default, the app accepts only the canonical headers shown above. Matching is case-insensitive and trims or collapses whitespace. Synonyms are not accepted in strict mode.
 
-- Transaction Date
-- Account Number
-- Account Holder Name
-- Amount
+An optional permissive mode normalizes these common variations:
 
-Matching is case-insensitive and trims/collapses whitespace. Synonyms are NOT accepted by default.
+- `Txn Date` to `Transaction Date`
+- `Acct Number` to `Account Number`
+- `Name` to `Account Holder Name`
 
-If you need to accept a few common header variations, you can enable a permissive mode in code:
+The mode is controlled by `STRICT_HEADER_MODE` in [`src/config/csv-validation.ts`](src/config/csv-validation.ts). End-to-end tests verify the default strict behavior.
 
-- Location: src/config/csv-validation.ts
-- Flag: STRICT_HEADER_MODE (boolean)
+## Test coverage
 
-Modes:
+- Valid, invalid and partially valid CSV uploads
+- Strict header validation and row-level error feedback
+- State preservation when moving between steps
+- Confirmation and transaction-list updates
+- Large valid and mixed datasets containing up to 10,000 rows
 
-- STRICT (default, recommended for audits): Only canonical headers accepted
-- PERMISSIVE (opt-in): Also accept and normalize these synonyms:
-  - "Txn Date" → "Transaction Date"
-  - "Acct Number" → "Account Number"
-  - "Name" → "Account Holder Name"
-
-Note: End-to-end tests validate the default STRICT behavior.
-
-Where to switch header mode: src/config/csv-validation.ts (set STRICT_HEADER_MODE).
-
-See requirements.md for the full spec and extra examples.
-
-## Notes
-
-- Playwright uses http://localhost:5173 by default (see playwright.config.ts)
-- Large CSVs from `sample-data/` are available for stress testing
-
-## License
-
-MIT
+See [`TESTING_GUIDE.md`](TESTING_GUIDE.md) for the test structure and commands.
